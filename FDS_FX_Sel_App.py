@@ -1,6 +1,7 @@
-import os
+mport os
 import sys
 
+# CEIC API 클라이언트 경로 추가
 ceic_path = os.path.join(os.path.dirname(__file__), 'ceic_api_client')
 if os.path.exists(ceic_path):
     sys.path.insert(0, ceic_path)
@@ -15,6 +16,7 @@ import plotly.graph_objects as go
 from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass
 import matplotlib.pyplot as plt
+
 
 # 필요한 함수들을 import (또는 여기에 정의)
 # 사용자가 제공한 코드에서 필요한 모든 함수들을 포함해야 합니다
@@ -971,5 +973,6 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
 
