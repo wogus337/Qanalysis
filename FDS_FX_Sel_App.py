@@ -498,23 +498,23 @@ def run_fractal_dimension_analysis(
 # Streamlit 앱 시작
 st.set_page_config(layout="wide", page_title="Fractal Dimension Trading Analysis")
 
-# CSS로 폰트 크기 30% 감소
+# CSS로 폰트 크기 20% 감소
 st.markdown("""
     <style>
     .stApp {
-        font-size: 0.7em;
+        font-size: 0.8em;
     }
     h1 {
-        font-size: 2.1em;
+        font-size: 2.4em;
     }
     h2 {
-        font-size: 1.75em;
+        font-size: 2.0em;
     }
     h3 {
-        font-size: 1.4em;
+        font-size: 1.6em;
     }
     .stDataFrame {
-        font-size: 0.7em;
+        font-size: 0.8em;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -788,56 +788,13 @@ with st.spinner("데이터를 로딩하고 분석을 실행하는 중..."):
     raw_df = load_and_analyze_data()
     selected_summary_df, selected_timeseries_results, selected_detail_results = run_analysis(raw_df)
 
-# Signal 업데이트 섹션
-st.header("Signal 업데이트")
+# 요약 테이블 표시
 today = pd.Timestamp.today().normalize()
 today_str = today.strftime('%Y-%m-%d')
 
-# 각 지표별로 trading 진행 중인지 확인
-active_trading_dict = {}  # 지표별로 가장 최근 active trading 저장
-indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
-                  'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
-
-# selected_detail_results에서 각 케이스의 trades_df 확인
-for cfg_key, trades_df in selected_detail_results.items():
-    if len(trades_df) == 0:
-        continue
-    
-    col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
-    
-    # 각 거래에 대해 현재 날짜가 trading 기간 중인지 확인
-    for _, trade in trades_df.iterrows():
-        signal_date = pd.to_datetime(trade['시그널발생일'])
-        entry_date = pd.to_datetime(trade['트레이딩진입일'])
-        end_date = pd.to_datetime(trade['트레이딩종료일'])
-        
-        # 현재 날짜가 트레이딩 기간 중인지 확인 (진입일 <= 오늘 <= 종료일)
-        if entry_date <= today <= end_date:
-            signal_date_str = signal_date.strftime('%Y-%m-%d')
-            
-            # 같은 지표에 여러 케이스가 있을 수 있으므로, 가장 최근 시그널만 저장
-            if col not in active_trading_dict or signal_date > pd.to_datetime(active_trading_dict[col]['signal_date']):
-                active_trading_dict[col] = {
-                    'indicator': col,
-                    'signal_date': signal_date_str,
-                    'order': indicator_order.index(col) if col in indicator_order else 999
-                }
-
-# 지표 순서대로 정렬
-active_trading_list = list(active_trading_dict.values())
-active_trading_list.sort(key=lambda x: (x['order'], x['signal_date']))
-
-# 결과 표시
-if len(active_trading_list) == 0:
-    st.markdown("**현재는 signal 발생 / trading 중인 지표가 없습니다.**")
-else:
-    for item in active_trading_list:
-        st.markdown(f"**{item['indicator']} 지표에서 {item['signal_date']}일 신호가 발생하여 trading 진입 중입니다.**")
-
-st.markdown("---")
-
-# 요약 테이블 표시
-st.header("Trading Perf(2015~)")
+# 경우의 수 계산
+case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
+st.header(f"현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
 
 # 컬럼명 한글화
 if len(selected_summary_df) > 0:
@@ -869,6 +826,87 @@ if len(selected_summary_df) > 0:
     """, unsafe_allow_html=True)
 else:
     st.info("분석 결과가 없습니다.")
+
+# 각 지표별 상태 표시
+st.markdown("---")
+st.subheader("지표별 현재 상태")
+
+indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
+                  'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
+
+# 지표별로 그룹화
+indicator_status = {}
+for cfg_key, trades_df in selected_detail_results.items():
+    if len(trades_df) == 0:
+        continue
+    
+    col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
+    
+    if col not in indicator_status:
+        indicator_status[col] = {
+            'latest_trade': None,
+            'active_trading': None,
+            'current_signal': None,
+            'order': indicator_order.index(col) if col in indicator_order else 999
+        }
+    
+    # 각 거래 확인
+    for _, trade in trades_df.iterrows():
+        signal_date = pd.to_datetime(trade['시그널발생일'])
+        entry_date = pd.to_datetime(trade['트레이딩진입일'])
+        end_date = pd.to_datetime(trade['트레이딩종료일'])
+        perf = trade['성과']
+        trading_days = trade['트레이딩기간']
+        
+        # 현재 날짜가 트레이딩 기간 중인지 확인
+        if entry_date <= today <= end_date:
+            # Trading 중인 경우
+            if indicator_status[col]['active_trading'] is None or signal_date > pd.to_datetime(indicator_status[col]['active_trading']['signal_date']):
+                indicator_status[col]['active_trading'] = {
+                    'signal_date': signal_date,
+                    'entry_date': entry_date,
+                    'end_date': end_date
+                }
+        elif signal_date == today:
+            # 오늘 Signal이 발생한 경우
+            if indicator_status[col]['current_signal'] is None:
+                indicator_status[col]['current_signal'] = {
+                    'signal_date': signal_date
+                }
+        
+        # 가장 최근 종료된 거래 업데이트
+        if end_date < today:
+            if indicator_status[col]['latest_trade'] is None or end_date > pd.to_datetime(indicator_status[col]['latest_trade']['end_date']):
+                indicator_status[col]['latest_trade'] = {
+                    'signal_date': signal_date,
+                    'end_date': end_date,
+                    'trading_days': trading_days,
+                    'perf': perf
+                }
+
+# 지표 순서대로 정렬하여 표시
+sorted_indicators = sorted(indicator_status.items(), key=lambda x: (x[1]['order'], x[0]))
+
+for indicator, status in sorted_indicators:
+    if status['active_trading'] is not None:
+        # Trading 중인 경우
+        signal_date_str = status['active_trading']['signal_date'].strftime('%Y-%m-%d')
+        st.markdown(f"**{indicator}는 분석기준일 현재 Signal이 발생했습니다.** (신호 발생일: {signal_date_str}, Trading 진행 중)")
+    elif status['current_signal'] is not None:
+        # 오늘 Signal 발생한 경우
+        signal_date_str = status['current_signal']['signal_date'].strftime('%Y-%m-%d')
+        st.markdown(f"**{indicator}는 분석기준일 현재 Signal이 발생했습니다.** (신호 발생일: {signal_date_str})")
+    elif status['latest_trade'] is not None:
+        # 최근 거래가 있는 경우
+        signal_date_str = status['latest_trade']['signal_date'].strftime('%Y-%m-%d')
+        end_date_str = status['latest_trade']['end_date'].strftime('%Y-%m-%d')
+        trading_days = status['latest_trade']['trading_days']
+        perf = status['latest_trade']['perf']
+        perf_str = f"{perf:.4f}" if pd.notna(perf) else "N/A"
+        st.markdown(f"**{indicator}의 최근 신호는 {signal_date_str} 였고, {end_date_str}까지 {trading_days}일 Trading하여 수익이 {perf_str} 발생했습니다.**")
+    else:
+        # Signal/Trading 중이 아닌 경우
+        st.markdown(f"**{indicator}는 현재 Signal 발생 / Trading 중이 아닙니다.**")
 
 # 차트 표시
 st.header("시계열 차트")
@@ -973,3 +1011,4 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
