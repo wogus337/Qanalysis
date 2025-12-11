@@ -855,7 +855,7 @@ else:
 
 # 차트 표시
 st.header("시계열 차트")
-st.text("남색은 상승, 하늘색은 하락 신호입니다."
+st.text("남색은 상승, 하늘색은 하락 신호입니다.")
 
 # 지표별로 그룹화
 indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
@@ -957,5 +957,6 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
 
