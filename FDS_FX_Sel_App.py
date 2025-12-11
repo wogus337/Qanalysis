@@ -1,5 +1,3 @@
-import os
-
 ceic_path = os.path.join(os.path.dirname(__file__), 'ceic_api_client')
 if os.path.exists(ceic_path):
     sys.path.insert(0, ceic_path)
@@ -9,7 +7,6 @@ import numpy as np
 import itertools
 from ceic_api_client.pyceic import Ceic
 import streamlit as st
-from streamlit_tree_select import tree_select
 import plotly.express as px
 import plotly.graph_objects as go
 from typing import Optional, List, Dict, Tuple
@@ -21,7 +18,6 @@ import matplotlib.pyplot as plt
 
 token = st.secrets["CEIC_token"]
 Ceic.set_token(token)
-
 
 def clean_unit(u):
     if u is None or pd.isna(u):
@@ -747,17 +743,31 @@ def run_analysis(raw_df):
                 'FD': 'fractal_dimension_value'
             })
 
-            if len(trades_df) > 0 and '시그널발생일' in trades_df.columns:
-                signal_dates = pd.to_datetime(trades_df['시그널발생일']).unique()
-            else:
-                signal_dates = []
-
             timeseries_df[date_column] = pd.to_datetime(timeseries_df[date_column])
             timeseries_df['signal여부'] = 0
-            signal_mask = timeseries_df[date_column].isin(signal_dates)
-            timeseries_df.loc[signal_mask, 'signal여부'] = 1
+            timeseries_df['signal_slope_sign'] = 0  # 0: no signal, 1: positive slope, -1: negative slope
 
-            timeseries_df = timeseries_df[[date_column, 'value', 'fractal_dimension_value', 'signal여부']]
+            if len(trades_df) > 0 and '시그널발생일' in trades_df.columns and '시그널기울기' in trades_df.columns:
+                # 시그널 발생일과 기울기 정보를 딕셔너리로 생성
+                signal_info = {}
+                for _, row in trades_df.iterrows():
+                    signal_date = pd.to_datetime(row['시그널발생일'])
+                    signal_slope = row['시그널기울기']
+                    if pd.notna(signal_slope):
+                        slope_sign = 1 if signal_slope > 0 else -1
+                    else:
+                        slope_sign = 0
+                    signal_info[signal_date] = slope_sign
+
+                # 시계열 데이터에 signal 정보 추가
+                for idx, row in timeseries_df.iterrows():
+                    date_val = row[date_column]
+                    if date_val in signal_info:
+                        timeseries_df.loc[idx, 'signal여부'] = 1
+                        timeseries_df.loc[idx, 'signal_slope_sign'] = signal_info[date_val]
+
+            timeseries_df = timeseries_df[
+                [date_column, 'value', 'fractal_dimension_value', 'signal여부', 'signal_slope_sign']]
             selected_timeseries_results[cfg_key] = timeseries_df
 
         except Exception as e:
@@ -849,15 +859,7 @@ if len(selected_summary_df) > 0:
     # 설명 텍스트
     st.markdown("""
     <div style="font-size: 0.85em; color: #666;">
-    지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br>
-    analysis_column은 분석지표<br>
-    analysis_window는 분석(FD계산)일<br>
-    slope_threshold는 직전기울기요건<br>
-    trading_period는 트레이딩기간<br>
-    fd_level_threshold는 FD기준<br>
-    trade_count는 Signal발생횟수<br>
-    hit_ratio는 Hit Ratio<br>
-    avg_Perf는 평균성과
+    지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br>    
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -865,7 +867,7 @@ else:
 
 # 차트 표시
 st.header("시계열 차트")
-
+st.text("남색은 상승 / 하늘색은 하락 신호")
 # 지표별로 그룹화
 indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
                    'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
@@ -922,16 +924,34 @@ for indicator in indicator_order:
             ))
 
             # Signal 점 표시 (signal여부가 1인 경우)
+            # slope가 -인 경우와 +인 경우를 구분하여 표시
             signal_mask = ts['signal여부'] == 1
             if signal_mask.any():
-                fig.add_trace(go.Scatter(
-                    x=ts.loc[signal_mask, date_col],
-                    y=ts.loc[signal_mask, 'value'],
-                    mode='markers',
-                    name='Signal',
-                    marker=dict(size=6, color='rgb(4,59,114)', symbol='circle'),
-                    showlegend=False
-                ))
+                signal_data = ts.loc[signal_mask]
+
+                # slope가 음수인 경우 (rgb(4,59,114))
+                negative_mask = signal_data['signal_slope_sign'] == -1
+                if negative_mask.any():
+                    fig.add_trace(go.Scatter(
+                        x=signal_data.loc[negative_mask, date_col],
+                        y=signal_data.loc[negative_mask, 'value'],
+                        mode='markers',
+                        name='Signal (-)',
+                        marker=dict(size=6, color='rgb(4,59,114)', symbol='circle'),
+                        showlegend=False
+                    ))
+
+                # slope가 양수인 경우 (rgb(0,169,206))
+                positive_mask = signal_data['signal_slope_sign'] == 1
+                if positive_mask.any():
+                    fig.add_trace(go.Scatter(
+                        x=signal_data.loc[positive_mask, date_col],
+                        y=signal_data.loc[positive_mask, 'value'],
+                        mode='markers',
+                        name='Signal (+)',
+                        marker=dict(size=8, color='rgb(0,169,206)', symbol='circle'),
+                        showlegend=False
+                    ))
 
             fig.update_layout(
                 xaxis_title='Date',
@@ -948,7 +968,3 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
-
-
-
-
