@@ -1,4 +1,4 @@
-mport os
+import os
 import sys
 
 # CEIC API 클라이언트 경로 추가
@@ -973,6 +973,7 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
 
 
