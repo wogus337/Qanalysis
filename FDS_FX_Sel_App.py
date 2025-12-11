@@ -903,9 +903,9 @@ for indicator, status in sorted_indicators:
         signal_date_str = ls['signal_date'].strftime('%Y-%m-%d')
         
         if ls['is_completed']:
-            # 트레이딩이 종료된 경우
-            end_date_str = ls['end_date'].strftime('%Y-%m-%d')
-            trading_days = ls['trading_days']
+            # 트레이딩이 종료된 경우 (목표 기간 기준)
+            expected_end_date_str = ls['expected_end_date'].strftime('%Y-%m-%d')
+            trading_period = ls['trading_period']
             perf = ls['perf']
             
             # 수익 표시 형식
@@ -917,7 +917,7 @@ for indicator, status in sorted_indicators:
             else:
                 perf_str = "N/A"
             
-            st.markdown(f"**{indicator}의 최근 신호는 {signal_date_str}였고, {end_date_str}일에 {trading_days}일의 trading이 종료되었습니다. 수익은 {perf_str}입니다.**")
+            st.markdown(f"**{indicator}의 최근 신호는 {signal_date_str}였고, {expected_end_date_str}일에 {trading_period}일의 trading이 종료되었습니다. 수익은 {perf_str}입니다.**")
         else:
             # 트레이딩이 진행 중인 경우
             trading_period = ls['trading_period']
