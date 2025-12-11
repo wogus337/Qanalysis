@@ -846,7 +846,8 @@ if len(selected_summary_df) > 0:
     # 설명 텍스트
     st.markdown("""
     <div style="font-size: 0.85em; color: #666;">
-    지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br>    
+    지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br> 
+    <br>
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -854,6 +855,7 @@ else:
 
 # 차트 표시
 st.header("시계열 차트")
+st.text("남색은 상승, 하늘색은 하락 신호입니다."
 
 # 지표별로 그룹화
 indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
@@ -955,4 +957,5 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
