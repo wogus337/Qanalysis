@@ -781,40 +781,58 @@ def run_analysis(raw_df):
     else:
         selected_summary_df_sorted = pd.DataFrame()
     
-    return selected_summary_df_sorted, selected_timeseries_results
+    return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
 # 메인 실행
 with st.spinner("데이터를 로딩하고 분석을 실행하는 중..."):
     raw_df = load_and_analyze_data()
-    selected_summary_df, selected_timeseries_results = run_analysis(raw_df)
+    selected_summary_df, selected_timeseries_results, selected_detail_results = run_analysis(raw_df)
 
 # Signal 업데이트 섹션
 st.header("Signal 업데이트")
 today = pd.Timestamp.today().normalize()
 today_str = today.strftime('%Y-%m-%d')
 
-# 최근 시그널 발생 지표 확인 (예: 최근 30일 내)
-recent_signal_indicators = set()
-for cfg_key, ts_df in selected_timeseries_results.items():
-    col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
-    date_col = ts_df.columns[0]
-    
-    # 최근 30일 내 시그널 확인
-    recent_date = today - pd.Timedelta(days=30)
-    recent_data = ts_df[ts_df[date_col] >= recent_date]
-    if len(recent_data) > 0 and recent_data['signal여부'].sum() > 0:
-        recent_signal_indicators.add(col)
+# 각 지표별로 trading 진행 중인지 확인
+active_trading_dict = {}  # 지표별로 가장 최근 active trading 저장
+indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
+                  'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
 
-if len(recent_signal_indicators) == 0:
-    st.markdown(f"**{today_str}일 현재 signal이 발생한 지표는 없습니다.**")
+# selected_detail_results에서 각 케이스의 trades_df 확인
+for cfg_key, trades_df in selected_detail_results.items():
+    if len(trades_df) == 0:
+        continue
+    
+    col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
+    
+    # 각 거래에 대해 현재 날짜가 trading 기간 중인지 확인
+    for _, trade in trades_df.iterrows():
+        signal_date = pd.to_datetime(trade['시그널발생일'])
+        entry_date = pd.to_datetime(trade['트레이딩진입일'])
+        end_date = pd.to_datetime(trade['트레이딩종료일'])
+        
+        # 현재 날짜가 트레이딩 기간 중인지 확인 (진입일 <= 오늘 <= 종료일)
+        if entry_date <= today <= end_date:
+            signal_date_str = signal_date.strftime('%Y-%m-%d')
+            
+            # 같은 지표에 여러 케이스가 있을 수 있으므로, 가장 최근 시그널만 저장
+            if col not in active_trading_dict or signal_date > pd.to_datetime(active_trading_dict[col]['signal_date']):
+                active_trading_dict[col] = {
+                    'indicator': col,
+                    'signal_date': signal_date_str,
+                    'order': indicator_order.index(col) if col in indicator_order else 999
+                }
+
+# 지표 순서대로 정렬
+active_trading_list = list(active_trading_dict.values())
+active_trading_list.sort(key=lambda x: (x['order'], x['signal_date']))
+
+# 결과 표시
+if len(active_trading_list) == 0:
+    st.markdown("**현재는 signal 발생 / trading 중인 지표가 없습니다.**")
 else:
-    # 지표 순서에 맞게 정렬
-    indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
-                      'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
-    sorted_indicators = sorted(recent_signal_indicators, 
-                               key=lambda x: indicator_order.index(x) if x in indicator_order else 999)
-    indicators_str = ', '.join(sorted_indicators)
-    st.markdown(f"**{today_str}일 현재 {indicators_str}에서 signal이 발생했습니다.**")
+    for item in active_trading_list:
+        st.markdown(f"**{item['indicator']} 지표에서 {item['signal_date']}일 신호가 발생하여 trading 진입 중입니다.**")
 
 st.markdown("---")
 
@@ -846,8 +864,7 @@ if len(selected_summary_df) > 0:
     # 설명 텍스트
     st.markdown("""
     <div style="font-size: 0.85em; color: #666;">
-    지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br> 
-    <br>
+    지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br>    
     </div>
     """, unsafe_allow_html=True)
 else:
@@ -855,8 +872,7 @@ else:
 
 # 차트 표시
 st.header("시계열 차트")
-st.text("남색은 상승, 하늘색은 하락 신호입니다.")
-
+st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
 # 지표별로 그룹화
 indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
                   'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
@@ -957,6 +973,3 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
-
-
-
