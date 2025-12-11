@@ -11,11 +11,9 @@ import numpy as np
 import itertools
 from ceic_api_client.pyceic import Ceic
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
 from typing import Optional, List, Dict, Tuple
 from dataclasses import dataclass
-import matplotlib.pyplot as plt
 
 
 # 필요한 함수들을 import (또는 여기에 정의)
@@ -973,6 +971,7 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
 
 
