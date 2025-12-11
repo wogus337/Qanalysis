@@ -3,8 +3,8 @@ import re  # noqa: F401
 
 import six
 
-from ceic_api_client.models.release_series_result import ReleaseSeriesResult
 from ceic_api_client.models.search_series_result import SearchSeriesResult
+from ceic_api_client.models.release_series_result import ReleaseSeriesResult
 from ceic_api_client.models.series_result import SeriesResult
 from ceic_api_client.models.vintage_dates_result import VintageDatesResult
 from ceic_api_client.models.insights_search_result import InsightsSearchResult
