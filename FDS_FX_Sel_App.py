@@ -873,8 +873,8 @@ for cfg_key, trades_df in selected_detail_results.items():
             
             # 목표 트레이딩 기간 기준으로 종료 여부 판단
             expected_end_date = entry_date + pd.Timedelta(days=tp)
-            # 실제 종료일이 있거나, 예상 종료일이 지났으면 종료된 것으로 판단
-            is_completed = (end_date < today) or (expected_end_date < today)
+            # 예상 종료일이 오늘보다 이전이면 종료된 것으로 판단 (목표 기간 기준)
+            is_completed = expected_end_date < today
             
             indicator_status[col]['latest_signal'] = {
                 'signal_date': signal_date,
@@ -1050,3 +1050,4 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
