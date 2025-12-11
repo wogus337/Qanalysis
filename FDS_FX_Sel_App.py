@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 # 필요한 함수들을 import (또는 여기에 정의)
 # 사용자가 제공한 코드에서 필요한 모든 함수들을 포함해야 합니다
 
-token = st.secrets["CEIC_token"]
+#token = st.secrets["CEIC_token"]
+token = "0ZOKEe8AS3RAUWGAaiA87mWvRUg1i6MsKs6MEBVInmGjCFjkzrkP7rI0icFRikxs2kmCkTK8OhZs3hT3dZuSi76YTccOtZhoBrBfSiEUJ0ibN3B6GiOUBm59Z4dFf40X"
 Ceic.set_token(token)
 
 
@@ -942,4 +943,5 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
