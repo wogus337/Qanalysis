@@ -1,4 +1,5 @@
 import os
+import sys
 
 ceic_path = os.path.join(os.path.dirname(__file__), 'ceic_api_client')
 if os.path.exists(ceic_path):
@@ -970,4 +971,5 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
+
 
