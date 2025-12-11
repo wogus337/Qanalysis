@@ -871,10 +871,16 @@ for cfg_key, trades_df in selected_detail_results.items():
                         current_price = latest_data.iloc[-1]['value']
                         break
             
+            # 목표 트레이딩 기간 기준으로 종료 여부 판단
+            expected_end_date = entry_date + pd.Timedelta(days=tp)
+            # 실제 종료일이 있거나, 예상 종료일이 지났으면 종료된 것으로 판단
+            is_completed = (end_date < today) or (expected_end_date < today)
+            
             indicator_status[col]['latest_signal'] = {
                 'signal_date': signal_date,
                 'entry_date': entry_date,
                 'end_date': end_date,
+                'expected_end_date': expected_end_date,
                 'trading_period': tp,
                 'trading_days': trading_days,
                 'entry_price': entry_price,
@@ -882,7 +888,7 @@ for cfg_key, trades_df in selected_detail_results.items():
                 'signal_slope': signal_slope,
                 'perf_metric': perf_m,
                 'perf': perf,
-                'is_completed': end_date < today  # 트레이딩이 종료되었는지
+                'is_completed': is_completed
             }
 
 # 지표 순서대로 정렬하여 표시
@@ -1044,4 +1050,3 @@ for indicator in indicator_order:
     for idx in range(len(cases), max_cols):
         with cols[idx]:
             st.empty()
-
