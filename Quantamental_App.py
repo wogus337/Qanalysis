@@ -846,7 +846,9 @@ with tab1:
         # 필요없는 컬럼 제거 (slope_metric, perf_metric, fd_level_lookback)
         display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
 
-        st.dataframe(display_df.reset_index(drop=True), use_container_width=True)
+        df_show = display_df.reset_index()
+        df_show = df_show.drop(columns=['index'])
+        st.dataframe(df_show, use_container_width=True)
 
         # 설명 텍스트
         st.markdown("""
@@ -1113,3 +1115,4 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
+
