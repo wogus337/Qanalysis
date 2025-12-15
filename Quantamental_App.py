@@ -26,7 +26,7 @@ from dataclasses import dataclass
 # 필요한 함수들을 import (또는 여기에 정의)
 # 사용자가 제공한 코드에서 필요한 모든 함수들을 포함해야 합니다
 
-token = "u9h1eLQGapViEsrT58kVHapiXjsjpWDP3UnqciNu8CNG5Ub1ml5UwLN9XM172KddhWLMq2dZh48HJHY6UXHshg1Cj2AdzDOX22uFtDsJ6RKeMsHWPYBptLN1mcgqMWpi"
+token = st.secrets["CEIC_token"]
 Ceic.set_token(token)
 
 
@@ -1087,4 +1087,5 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
+
 
