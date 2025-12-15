@@ -824,7 +824,7 @@ with tab1:
 
     # 경우의 수 계산
     case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
-    st.header(f"현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
+    st.subheader(f"현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
 
     # 컬럼명 한글화
     if len(selected_summary_df) > 0:
@@ -846,7 +846,7 @@ with tab1:
         # 필요없는 컬럼 제거 (slope_metric, perf_metric, fd_level_lookback)
         display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
 
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(display_df.reset_index(drop=True), use_container_width=True)
 
         # 설명 텍스트
         st.markdown("""
@@ -1007,8 +1007,8 @@ with tab1:
                         f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다{extension_note}. 현재 수익은 {perf_str} 입니다.**")
 
     # 차트 표시
-    st.header("시계열 차트")
-    st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
+    #st.header("시계열 차트")
+    st.subheader("[차트] 남색은 상승 신호 / 하늘색은 하락 신호")
     # 지표별로 그룹화
     indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
                        'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
