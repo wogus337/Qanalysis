@@ -864,7 +864,7 @@ with tab1:
     indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
                        'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
 
-    # 지표별로 가장 최근 신호 찾기
+    # 지표별로 각 케이스의 최근 신호 찾기
     indicator_status = {}
     for cfg_key, trades_df in selected_detail_results.items():
         if len(trades_df) == 0:
@@ -874,11 +874,12 @@ with tab1:
 
         if col not in indicator_status:
             indicator_status[col] = {
-                'latest_signal': None,
+                'cases': [],
                 'order': indicator_order.index(col) if col in indicator_order else 999
             }
 
         # 각 거래 확인하여 가장 최근 신호 찾기
+        latest_signal_for_case = None
         for _, trade in trades_df.iterrows():
             signal_date = pd.to_datetime(trade['시그널발생일'])
             entry_date = pd.to_datetime(trade['트레이딩진입일'])
@@ -887,10 +888,11 @@ with tab1:
             trading_days = trade['트레이딩기간']
             entry_price = trade['트레이딩진입일가격']
             signal_slope = trade['시그널기울기']
+            extension_flag = trade.get('연장여부', 'N')
+            extension_reason = trade.get('연장사유', '')
 
             # 가장 최근 신호 업데이트
-            if indicator_status[col]['latest_signal'] is None or signal_date > pd.to_datetime(
-                    indicator_status[col]['latest_signal']['signal_date']):
+            if latest_signal_for_case is None or signal_date > pd.to_datetime(latest_signal_for_case['signal_date']):
                 # 현재 가격 가져오기 (시계열 데이터에서)
                 current_price = None
                 for ts_cfg_key, ts_df in selected_timeseries_results.items():
@@ -907,7 +909,7 @@ with tab1:
                 # 예상 종료일이 오늘보다 이전이면 종료된 것으로 판단 (목표 기간 기준)
                 is_completed = expected_end_date < today
 
-                indicator_status[col]['latest_signal'] = {
+                latest_signal_for_case = {
                     'signal_date': signal_date,
                     'entry_date': entry_date,
                     'end_date': end_date,
@@ -919,66 +921,90 @@ with tab1:
                     'signal_slope': signal_slope,
                     'perf_metric': perf_m,
                     'perf': perf,
-                    'is_completed': is_completed
+                    'is_completed': is_completed,
+                    'extension_flag': extension_flag,
+                    'extension_reason': extension_reason,
+                    'cfg_key': cfg_key
                 }
+
+        # 케이스 정보 저장
+        if latest_signal_for_case is not None:
+            indicator_status[col]['cases'].append(latest_signal_for_case)
 
     # 지표 순서대로 정렬하여 표시
     sorted_indicators = sorted(indicator_status.items(), key=lambda x: (x[1]['order'], x[0]))
 
     for indicator, status in sorted_indicators:
-        if status['latest_signal'] is None:
+        if len(status['cases']) == 0:
             # Signal이 없는 경우
             st.markdown(f"**{indicator}는 현재 Signal 발생 / Trading 중이 아닙니다.**")
         else:
-            ls = status['latest_signal']
-            signal_date_str = ls['signal_date'].strftime('%Y-%m-%d')
-
-            if ls['is_completed']:
-                # 트레이딩이 종료된 경우 (목표 기간 기준)
-                expected_end_date_str = ls['expected_end_date'].strftime('%Y-%m-%d')
-                trading_period = ls['trading_period']
-                perf = ls['perf']
-
-                # 수익 표시 형식
-                if pd.notna(perf):
-                    if ls['perf_metric'] == 'rate':
-                        perf_str = f"{perf * 100:.1f}%"
-                    else:
-                        perf_str = f"{perf * 100:.2f}bp"
+            # 케이스별로 표시 (여러 케이스가 있으면 번호 부여)
+            cases = status['cases']
+            for case_idx, ls in enumerate(cases, 1):
+                # 지표명에 케이스 번호 추가 (여러 케이스가 있는 경우만)
+                if len(cases) > 1:
+                    indicator_name = f"{indicator}({case_idx})"
                 else:
-                    perf_str = "N/A"
+                    indicator_name = indicator
 
-                st.markdown(
-                    f"**{indicator}의 최근 신호는 {signal_date_str}였고, {expected_end_date_str}일에 {trading_period}일의 trading이 종료되었습니다. 수익은 {perf_str}입니다.**")
-            else:
-                # 트레이딩이 진행 중인 경우
-                trading_period = ls['trading_period']
-                elapsed_days = (today - ls['entry_date']).days + 1
+                signal_date_str = ls['signal_date'].strftime('%Y-%m-%d')
 
-                # 현재 수익 계산
-                current_perf = None
-                if ls['current_price'] is not None and pd.notna(ls['entry_price']) and ls['entry_price'] != 0:
-                    if ls['perf_metric'] == 'rate':
-                        # 변화율 기준
-                        current_perf = (ls['current_price'] - ls['entry_price']) / ls['entry_price']
-                        # signal_slope가 양수면 반대 방향
-                        if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
-                            current_perf = -current_perf
-                        # 소숫점 첫째자리까지 %로 표시
-                        perf_str = f"{current_perf * 100:.1f}%"
+                if ls['is_completed']:
+                    # 트레이딩이 종료된 경우 (목표 기간 기준)
+                    expected_end_date_str = ls['expected_end_date'].strftime('%Y-%m-%d')
+                    trading_period = ls['trading_period']
+                    perf = ls['perf']
+
+                    # 수익 표시 형식
+                    if pd.notna(perf):
+                        if ls['perf_metric'] == 'rate':
+                            perf_str = f"{perf * 100:.1f}%"
+                        else:
+                            perf_str = f"{perf * 100:.2f}bp"
                     else:
-                        # 변화폭 기준
-                        current_perf = ls['current_price'] - ls['entry_price']
-                        # signal_slope가 양수면 반대 방향
-                        if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
-                            current_perf = -current_perf
-                        # 수익에 100을 곱한 후 소숫점 둘째자리까지 bp로 표시
-                        perf_str = f"{current_perf * 100:.2f}bp"
-                else:
-                    perf_str = "N/A"
+                        perf_str = "N/A"
 
-                st.markdown(
-                    f"**{indicator}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다. 현재 수익은 {perf_str} 입니다.**")
+                    st.markdown(
+                        f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, {expected_end_date_str}일에 {trading_period}일의 trading이 종료되었습니다. 수익은 {perf_str}입니다.**")
+                else:
+                    # 트레이딩이 진행 중인 경우
+                    trading_period = ls['trading_period']
+                    elapsed_days = (today - ls['entry_date']).days + 1
+
+                    # 시그널 연장 여부 확인
+                    is_extended = elapsed_days > trading_period
+                    extension_note = ""
+                    if is_extended:
+                        if ls['extension_flag'] == 'Y' and ls['extension_reason']:
+                            extension_note = f" (시그널 연장 발생: {ls['extension_reason']})"
+                        else:
+                            extension_note = " (시그널 연장 발생)"
+
+                    # 현재 수익 계산
+                    current_perf = None
+                    if ls['current_price'] is not None and pd.notna(ls['entry_price']) and ls['entry_price'] != 0:
+                        if ls['perf_metric'] == 'rate':
+                            # 변화율 기준
+                            current_perf = (ls['current_price'] - ls['entry_price']) / ls['entry_price']
+                            # signal_slope가 양수면 반대 방향
+                            if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
+                                current_perf = -current_perf
+                            # 소숫점 첫째자리까지 %로 표시
+                            perf_str = f"{current_perf * 100:.1f}%"
+                        else:
+                            # 변화폭 기준
+                            current_perf = ls['current_price'] - ls['entry_price']
+                            # signal_slope가 양수면 반대 방향
+                            if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
+                                current_perf = -current_perf
+                            # 수익에 100을 곱한 후 소숫점 둘째자리까지 bp로 표시
+                            perf_str = f"{current_perf * 100:.2f}bp"
+                    else:
+                        perf_str = "N/A"
+
+                    st.markdown(
+                        f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다{extension_note}. 현재 수익은 {perf_str} 입니다.**")
 
     # 차트 표시
     st.header("시계열 차트")
@@ -1087,5 +1113,3 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
-
-
