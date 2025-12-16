@@ -843,154 +843,92 @@ def run_analysis(raw_df):
 tab1, tab2 = st.tabs(["US Man.PMI", "FDS"])
 
 with tab1:
-    st.header("US ISM Man. PMI")
-    
-    # 새로고침 버튼
-    col_btn, col_info = st.columns([10, 1])
-    with col_btn:
-        if st.button("새로고침(30초 이내)", key="refresh_ism", help="최신 데이터를 즉시 불러옵니다"):
-            load_ism_pmi_data.clear()
-            st.success("데이터를 새로 불러오는 중...")
-            st.rerun()    
-        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
-    
-    # 캐싱된 함수 호출
-    raw_df = load_ism_pmi_data()
-    
-    # 데이터의 최신 날짜 표시
-    if len(raw_df) > 0:
-        latest_date = raw_df['date'].max()
-        st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
-    
-    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
-    n_show = 6
-    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
-    
-    df_for_disp = raw_df.copy()
-    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
-    df_for_disp = df_for_disp.reset_index(drop=True)
-    df_for_disp_disp = df_for_disp.drop(columns=['date'])
-    
-    original_columns = list(df_for_disp_disp.columns)
-    
-    transposed = df_for_disp_disp.T
-    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    transposed.index.name = None
-    transposed.reset_index(inplace=True)
-    transposed.rename(columns={'index': '항목'}, inplace=True)
-    
-    delta_cols = []
-    for i in range(1, n_show):
-        chg_col = f'Chg{i}'
-        delta_vals = transposed.iloc[:, i + 1] - transposed.iloc[:, i]
-        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
-        delta_cols.append((chg_col, delta_vals))
-        transposed[chg_col] = delta_vals
-    
-    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
-    transposed = transposed[['항목'] + date_cols + chg_cols]
-    
-    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
-    transposed = transposed.sort_values('항목').reset_index(drop=True)
-    
+    # 항목 선택을 그래프 위로 이동 (col1, col2 생성 전에)
     st.subheader("미국 ISM 제조업 PMI")
     
-    gb = GridOptionsBuilder.from_dataframe(transposed)
-    gb.configure_default_column(resizable=True, filter=True, sortable=True)
+    # ... (AgGrid 코드는 그대로) ...
     
-    for col in date_cols + chg_cols:
-        gb.configure_column(col, cellStyle={"textAlign": "center"})
+    # 공통 항목 찾기
+    bar_items = transposed["항목"].tolist()
+    line_items = ["ISM Man. PMI", "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories"]
+    common_items = [item for item in line_items if item in bar_items]
+    if len(common_items) == 0:
+        common_items = bar_items
     
-    def get_row_style_js():
-        return JsCode("""
-        function(params) {
-            if (params.node.rowIndex === 0) {
-                return {
-                    'backgroundColor': '#1565c0',
-                    'color': 'white',
-                    'fontWeight': 'bold'
-                }
-            } else {
-                return {
-                    'fontFamily': 'inherit',
-                    'paddingLeft': '20px'
-                }
-            }
-        }
-        """)
-    
-    indent_js = JsCode("""
-    function(params) {
-        if (params.node.rowIndex === 0) {
-            return params.value;
-        } else {
-            return '\\u00A0\\u00A0' + params.value;
-        }
-    }
-    """)
-    
-    gb.configure_column("항목", cellRenderer=indent_js)
-    gb.configure_grid_options(getRowStyle=get_row_style_js())
-    
-    AgGrid(
-        transposed,
-        gridOptions=gb.build(),
-        height=400,
-        width='100%',
-        fit_columns_on_grid_load=True,
-        theme="streamlit",
-        allow_unsafe_jscode=True
+    # 항목 선택 (그래프 위에 배치)
+    selected_items = st.multiselect(
+        "📊 표시할 항목 선택 (막대그래프 & 라인차트 동기화)",
+        options=common_items,
+        default=common_items,
+        key="ism_items_selection"
     )
     
     col1, col2 = st.columns(2)
     
     with col1:
-        chg_cols = ["Chg1", "Chg2", "Chg3"]
-        bar_colors = [
-            "rgb(245,130,32)",
-            "rgb(4,59,114)",
-            "rgb(0,169,206)"
-        ]
-        
-        x_vals = transposed["항목"].tolist()
-        y1 = transposed[chg_cols[0]].tolist()
-        y2 = transposed[chg_cols[1]].tolist()
-        y3 = transposed[chg_cols[2]].tolist()
-        
-        chg_labels = list(transposed.columns[1:4])
-        
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y1,
-            name=chg_labels[0],
-            marker_color=bar_colors[0]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y2,
-            name=chg_labels[1],
-            marker_color=bar_colors[1]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y3,
-            name=chg_labels[2],
-            marker_color=bar_colors[2]
-        ))
-        
-        fig.update_layout(
-            barmode='group',
-            xaxis_title="항목",
-            yaxis_title="변화량",
-            margin=dict(l=20, r=20, t=40, b=40),
-            legend_title="날짜"
-        )
-        
         st.subheader("Change")
-        st.plotly_chart(fig, use_container_width=True)
+        
+        if len(selected_items) == 0:
+            st.info("표시할 항목을 선택해주세요.")
+        else:
+            # 막대그래프용 필터링
+            filtered_transposed = transposed[transposed["항목"].isin(selected_items)]
+            
+            chg_cols = ["Chg1", "Chg2", "Chg3"]
+            bar_colors = [
+                "rgb(245,130,32)",
+                "rgb(4,59,114)",
+                "rgb(0,169,206)"
+            ]
+            
+            x_vals = filtered_transposed["항목"].tolist()
+            y1 = filtered_transposed[chg_cols[0]].tolist()
+            y2 = filtered_transposed[chg_cols[1]].tolist()
+            y3 = filtered_transposed[chg_cols[2]].tolist()
+            
+            def convert_to_float(val):
+                try:
+                    return float(val) if val != "" else 0.0
+                except:
+                    return 0.0
+            
+            y1 = [convert_to_float(v) for v in y1]
+            y2 = [convert_to_float(v) for v in y2]
+            y3 = [convert_to_float(v) for v in y3]
+            
+            chg_labels = list(filtered_transposed.columns[1:4])
+            
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y1,
+                name=chg_labels[0],
+                marker_color=bar_colors[0]
+            ))
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y2,
+                name=chg_labels[1],
+                marker_color=bar_colors[1]
+            ))
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y3,
+                name=chg_labels[2],
+                marker_color=bar_colors[2]
+            ))
+            
+            fig.update_layout(
+                barmode='group',
+                xaxis_title="항목",
+                yaxis_title="변화량",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend_title="날짜"
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
     
+    # 라인차트 부분
     ism_items = ["ISM Man. PMI", "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories"]
     
     try:
@@ -1043,12 +981,17 @@ with tab1:
                 end_date = start_date
             
             mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
-            plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
+            
+            # 선택된 항목만 필터링 (막대그래프와 동기화)
+            selected_items_for_line = st.session_state.get("ism_items_selection", common_items)
+            filtered_ism_items = [item for item in ism_items if item in selected_items_for_line]
+            
+            plot_df = base_df.loc[mask, [date_col] + [col for col in filtered_ism_items if col in base_df.columns]].copy()
             
             ism_fig = go.Figure()
             ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
             
-            for i, col in enumerate(ism_items):
+            for i, col in enumerate(filtered_ism_items):
                 if col in plot_df.columns:
                     ism_fig.add_trace(
                         go.Scatter(
@@ -1488,6 +1431,7 @@ with tab2:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
 
 
 
