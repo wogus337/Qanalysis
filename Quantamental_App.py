@@ -831,7 +831,7 @@ with tab1:
 
     # 경우의 수 계산
     case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
-    st.header(f"현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
+    st.subheader(f"현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
 
     # 컬럼명 한글화
     if len(selected_summary_df) > 0:
@@ -1275,4 +1275,5 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
+
 
