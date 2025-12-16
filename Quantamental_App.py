@@ -897,6 +897,16 @@ with tab1:
             align-items: center !important;
             justify-content: center !important;
         }
+        .ag-header-cell {
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .ag-header-cell-label {
+            justify-content: center !important;
+            width: 100% !important;
+        }
         </style>
         """, unsafe_allow_html=True)
         
@@ -1185,5 +1195,4 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
-
 
