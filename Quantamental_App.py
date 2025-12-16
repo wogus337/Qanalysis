@@ -846,14 +846,12 @@ with tab1:
     st.header("US ISM Man. PMI")
     
     # 새로고침 버튼
-    col_btn, col_info = st.columns([1, 10])
+    col_btn, col_info = st.columns([10, 1])
     with col_btn:
         if st.button("새로고침", key="refresh_ism", help="최신 데이터를 즉시 불러옵니다"):
             load_ism_pmi_data.clear()
             st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-    
-    with col_info:
+            st.rerun()    
         st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
     
     # 캐싱된 함수 호출
@@ -1075,15 +1073,13 @@ with tab2:
     st.header("Fractal Dimension Trading Analysis")
     
     # 새로고침 버튼
-    col_btn, col_info = st.columns([1, 10])
+    col_btn, col_info = st.columns([10, 1])
     with col_btn:
         if st.button("새로고침", key="refresh_fds", help="최신 데이터를 즉시 불러옵니다"):
             load_and_analyze_data.clear()
             run_analysis.clear()
             st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-    
-    with col_info:
+            st.rerun()    
         st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
     
     # 메인 실행
@@ -1492,4 +1488,5 @@ with tab2:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
 
