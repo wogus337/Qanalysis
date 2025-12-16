@@ -823,10 +823,294 @@ def run_analysis(raw_df):
     return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
 
+
 # 탭 생성
-tab1, tab2 = st.tabs(["FDS", "US Man.PMI"])
+tab1, tab2 = st.tabs(["US Man.PMI", FDS"])
 
 with tab1:
+    st.header("US ISM Man. PMI")
+    # CEIC 데이터 로딩 (기존 코드)
+    codes_U = ['41044601',
+               '41044701', '41044801', '41045501', '41044901', '41045001',
+               '41045101', '41045201', '41045301', '41045401', '212050202']
+
+    df_U = Ceic.series(codes_U, start_date='2025-01-01').as_pandas()
+    # df_U = Ceic.series(codes_U, end_date='2024-12-31').as_pandas()
+    meta_U = Ceic.series_metadata(codes_U).as_pandas()
+
+    meta_U["name"] = (
+        meta_U["name"]
+        .str.replace("Report On Business: Purchasing Managers' Index", "ISM Man. PMI", regex=False)
+        .str.replace("Report On Business: PMI: ", "", regex=False)
+        .str.replace(" Index", "", regex=False)
+    )
+    # 계산: New Orders, Production, Employment, Supplier Deliveries, Inventories
+
+    df_U['id'] = df_U['id'].astype(str)
+    meta_U['id'] = meta_U['id'].astype(str)
+    df_pivot = df_U.pivot(index='date', columns='id', values='value')
+    id_to_unit = meta_U.set_index('id')['name']
+    df_pivot = df_pivot.rename(columns=lambda x: clean_unit(id_to_unit.get(x, x)))
+    df_U_tr = df_pivot.sort_index()
+    df_U_tr = df_U_tr.reset_index().rename(columns={'index': 'date'})
+    df_U_tr = df_U_tr[["date", "ISM Man. PMI",
+                       "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories",
+                       "New Export Orders", "Imports", "Prices", "Customers Inventories", "Backlog of Orders"]]
+
+    # df_U_tr.to_csv('ori_MPMI.csv', index=False)
+    df_oriU = pd.read_csv('ori_MPMI.csv')
+
+    df_oriU['date'] = pd.to_datetime(df_oriU['date'])
+    df_U_tr['date'] = pd.to_datetime(df_U_tr['date'])
+    df_U = pd.concat([df_oriU, df_U_tr], ignore_index=True)
+    raw_df = df_U.copy()
+    raw_df = raw_df[raw_df['date'] >= '1992-01-01']
+
+    st.set_page_config(layout="wide", page_title="Quantamental Analysis Dashboard")
+
+    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+    n_show = 6
+
+    # date(날짜) 컬럼은 제외하고, 최근 6개 날짜 값만 추출
+    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+    # sort_values(ascending=False)로 최근 -> 과거 순 정렬, head(n_show) -> 다시 오름차로 재정렬
+
+    df_for_disp = raw_df.copy()
+    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+    df_for_disp = df_for_disp.reset_index(drop=True)
+    df_for_disp_disp = df_for_disp.drop(columns=['date'])
+
+    # 칼럼 순서 저장
+    original_columns = list(df_for_disp_disp.columns)
+
+    # 전치: 행->칼럼, 칼럼->행 (원래 칼럼이 row로 내려감)
+    transposed = df_for_disp_disp.T
+    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+    transposed.index.name = None
+    transposed.reset_index(inplace=True)
+    transposed.rename(columns={'index': '항목'}, inplace=True)
+
+    # 변화량(Chg1~Chg5) 계산: (최근 - 이전 순서)
+    delta_cols = []
+    for i in range(1, n_show):
+        chg_col = f'Chg{i}'
+        delta_vals = transposed.iloc[:, i + 1] - transposed.iloc[:, i]
+        # 소수점 첫째자리 포맷
+        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
+        delta_cols.append((chg_col, delta_vals))
+        transposed[chg_col] = delta_vals
+
+    # 컬럼 순서 정리: '항목', 최근 6개 날짜, Chg1~Chg5
+    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
+    transposed = transposed[['항목'] + date_cols + chg_cols]
+
+    # 항목(지표) 순서를 원래 순서로 강제 정렬
+    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+    transposed = transposed.sort_values('항목').reset_index(drop=True)
+
+    st.subheader("미국 ISM 제조업 PMI")
+    gb = GridOptionsBuilder.from_dataframe(transposed)
+    gb.configure_default_column(resizable=True, filter=True, sortable=True)
+    # 숫자 칼럼 가운데 정렬
+    for col in date_cols + chg_cols:
+        gb.configure_column(col, cellStyle={"textAlign": "center"})
+
+
+    def get_row_style_js():
+        return JsCode("""
+        function(params) {
+            if (params.node.rowIndex === 0) {
+                return {
+                    'backgroundColor': '#1565c0',
+                    'color': 'white',
+                    'fontWeight': 'bold'
+                }
+            } else {
+                return {
+                    'fontFamily': 'inherit',
+                    'paddingLeft': '20px'
+                }
+            }
+        }
+        """)
+
+
+    # '항목' 컬럼: 들여쓰기 위해 cell renderer 지정 (첫행은 그대로, 이후 한칸 들여쓰기)
+    indent_js = JsCode("""
+    function(params) {
+        if (params.node.rowIndex === 0) {
+            return params.value;
+        } else {
+            return '\\u00A0\\u00A0' + params.value;
+        }
+    }
+    """)
+
+    gb.configure_column("항목", cellRenderer=indent_js)
+
+    # row style 전체 적용
+    gb.configure_grid_options(getRowStyle=get_row_style_js())
+
+    # 표를 가로로 스크롤 없이 보여주기 위해 width 확보
+    AgGrid(
+        transposed,
+        gridOptions=gb.build(),
+        height=400,
+        width='100%',
+        fit_columns_on_grid_load=True,
+        theme="streamlit",
+        allow_unsafe_jscode=True
+    )
+
+    # 2개 열로 나누기
+    col1, col2 = st.columns(2)
+
+    # ----- (1) 기존 막대그래프는 왼쪽 열 col1에 표시 -----
+    with col1:
+
+        # chg1~chg3 관련 컬럼명 및 color, 레이블 추출
+        chg_cols = ["Chg1", "Chg2", "Chg3"]
+        bar_colors = [
+            "rgb(245,130,32)",  # chg1
+            "rgb(4,59,114)",  # chg2
+            "rgb(0,169,206)"  # chg3
+        ]
+
+        # transposed 데이터프레임의 항목이름과 chg1~chg3 값 추출
+        x_vals = transposed["항목"].tolist()
+        y1 = transposed[chg_cols[0]].tolist()
+        y2 = transposed[chg_cols[1]].tolist()
+        y3 = transposed[chg_cols[2]].tolist()
+
+        # chg1~chg3의 레이블은 테이블의 2~4번째 칼럼명(날짜)
+        chg_labels = list(transposed.columns[1:4])
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=y1,
+            name=chg_labels[0],
+            marker_color=bar_colors[0]
+        ))
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=y2,
+            name=chg_labels[1],
+            marker_color=bar_colors[1]
+        ))
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=y3,
+            name=chg_labels[2],
+            marker_color=bar_colors[2]
+        ))
+
+        fig.update_layout(
+            barmode='group',
+            xaxis_title="항목",
+            yaxis_title="변화량",
+            margin=dict(l=20, r=20, t=40, b=40),
+            legend_title="날짜"
+        )
+
+        st.subheader("Change")
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ----- (2) ISM 구성 6개 항목 시계열 라인차트는 오른쪽 열 col2에 표시 -----
+    # 필요한 항목들
+    ism_items = ["ISM Man. PMI", "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories"]
+
+    # 날짜 컬럼명 추정 (예시: "날짜" 또는 "Date"), transposed df에는 없음 → 원본 df 필요
+    # 일반적으로 데이터의 원본이 "data" 또는 유사한 df임을 가정
+    # 아래 data 변수에 해당하는 실제 데이터프레임 이름으로 교체하세요.
+
+    # 예: data = pd.read_csv(...)
+
+    # 여기서는 transposed가 만들어진 기반 dataframe을 pmi_df라고 가정
+    # 반드시 아래 변수명을 실제 데이터프레임에 맞게 수정하세요!
+    try:
+        base_df = raw_df.copy()
+    except NameError:
+        base_df = None
+
+    if base_df is not None:
+        # 날짜 컬럼 자동 추출 시도
+        date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
+        if len(date_col_candidates) > 0:
+            date_col = date_col_candidates[0]
+        else:
+            date_col = base_df.columns[0]  # 첫 번째 컬럼
+
+        # 날짜타입 변환
+        base_df[date_col] = pd.to_datetime(base_df[date_col])
+
+        # 날짜 선택: 기본은 2022년 1월 1일~
+        min_date = base_df[date_col].min()
+        max_date = base_df[date_col].max()
+        default_start = pd.to_datetime("2023-01-01")
+        default_start = max(default_start, min_date)
+
+        with col2:
+            st.subheader("Time Series")
+
+            # 시작일과 종료일을 별도로 선택
+            col_start, col_end = st.columns(2)
+
+            with col_start:
+                start_date_input = st.date_input(
+                    "시작일",
+                    value=default_start.date(),
+                    min_value=min_date.date(),
+                    max_value=max_date.date(),
+                    key="ism_start_date"
+                )
+
+            with col_end:
+                end_date_input = st.date_input(
+                    "종료일",
+                    value=max_date.date(),
+                    min_value=min_date.date(),
+                    max_value=max_date.date(),
+                    key="ism_end_date"
+                )
+
+            start_date = pd.to_datetime(start_date_input)
+            end_date = pd.to_datetime(end_date_input)
+
+            # 시작일이 종료일보다 늦으면 경고
+            if start_date > end_date:
+                st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
+                end_date = start_date  # 자동 조정 또는 차트를 그리지 않음
+
+            mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
+            plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
+
+            ism_fig = go.Figure()
+            ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
+
+            for i, col in enumerate(ism_items):
+                if col in plot_df.columns:
+                    ism_fig.add_trace(
+                        go.Scatter(
+                            x=plot_df[date_col],
+                            y=plot_df[col],
+                            mode="lines+markers",
+                            name=col,
+                            line=dict(color=ism_colors[i % len(ism_colors)])
+                        )
+                    )
+
+            ism_fig.update_layout(
+                xaxis_title="날짜",
+                yaxis_title="수치",
+                legend_title="항목",
+                margin=dict(l=20, r=20, t=40, b=40)
+            )
+
+            st.plotly_chart(ism_fig, use_container_width=True)
+
+with tab2:
     st.header("Fractal Dimension Trading Analysis")
 
     # 메인 실행
@@ -1285,286 +1569,3 @@ with tab1:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
-
-with tab2:
-    st.header("US ISM Man. PMI")
-    # CEIC 데이터 로딩 (기존 코드)
-    codes_U = ['41044601',
-               '41044701', '41044801', '41045501', '41044901', '41045001',
-               '41045101', '41045201', '41045301', '41045401', '212050202']
-
-    df_U = Ceic.series(codes_U, start_date='2025-01-01').as_pandas()
-    # df_U = Ceic.series(codes_U, end_date='2024-12-31').as_pandas()
-    meta_U = Ceic.series_metadata(codes_U).as_pandas()
-
-    meta_U["name"] = (
-        meta_U["name"]
-        .str.replace("Report On Business: Purchasing Managers' Index", "ISM Man. PMI", regex=False)
-        .str.replace("Report On Business: PMI: ", "", regex=False)
-        .str.replace(" Index", "", regex=False)
-    )
-    # 계산: New Orders, Production, Employment, Supplier Deliveries, Inventories
-
-    df_U['id'] = df_U['id'].astype(str)
-    meta_U['id'] = meta_U['id'].astype(str)
-    df_pivot = df_U.pivot(index='date', columns='id', values='value')
-    id_to_unit = meta_U.set_index('id')['name']
-    df_pivot = df_pivot.rename(columns=lambda x: clean_unit(id_to_unit.get(x, x)))
-    df_U_tr = df_pivot.sort_index()
-    df_U_tr = df_U_tr.reset_index().rename(columns={'index': 'date'})
-    df_U_tr = df_U_tr[["date", "ISM Man. PMI",
-                       "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories",
-                       "New Export Orders", "Imports", "Prices", "Customers Inventories", "Backlog of Orders"]]
-
-    # df_U_tr.to_csv('ori_MPMI.csv', index=False)
-    df_oriU = pd.read_csv('ori_MPMI.csv')
-
-    df_oriU['date'] = pd.to_datetime(df_oriU['date'])
-    df_U_tr['date'] = pd.to_datetime(df_U_tr['date'])
-    df_U = pd.concat([df_oriU, df_U_tr], ignore_index=True)
-    raw_df = df_U.copy()
-    raw_df = raw_df[raw_df['date'] >= '1992-01-01']
-
-    st.set_page_config(layout="wide", page_title="Quantamental Analysis Dashboard")
-
-    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
-    n_show = 6
-
-    # date(날짜) 컬럼은 제외하고, 최근 6개 날짜 값만 추출
-    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
-    # sort_values(ascending=False)로 최근 -> 과거 순 정렬, head(n_show) -> 다시 오름차로 재정렬
-
-    df_for_disp = raw_df.copy()
-    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
-    df_for_disp = df_for_disp.reset_index(drop=True)
-    df_for_disp_disp = df_for_disp.drop(columns=['date'])
-
-    # 칼럼 순서 저장
-    original_columns = list(df_for_disp_disp.columns)
-
-    # 전치: 행->칼럼, 칼럼->행 (원래 칼럼이 row로 내려감)
-    transposed = df_for_disp_disp.T
-    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    transposed.index.name = None
-    transposed.reset_index(inplace=True)
-    transposed.rename(columns={'index': '항목'}, inplace=True)
-
-    # 변화량(Chg1~Chg5) 계산: (최근 - 이전 순서)
-    delta_cols = []
-    for i in range(1, n_show):
-        chg_col = f'Chg{i}'
-        delta_vals = transposed.iloc[:, i + 1] - transposed.iloc[:, i]
-        # 소수점 첫째자리 포맷
-        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
-        delta_cols.append((chg_col, delta_vals))
-        transposed[chg_col] = delta_vals
-
-    # 컬럼 순서 정리: '항목', 최근 6개 날짜, Chg1~Chg5
-    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
-    transposed = transposed[['항목'] + date_cols + chg_cols]
-
-    # 항목(지표) 순서를 원래 순서로 강제 정렬
-    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
-    transposed = transposed.sort_values('항목').reset_index(drop=True)
-
-    st.subheader("미국 ISM 제조업 PMI")
-    gb = GridOptionsBuilder.from_dataframe(transposed)
-    gb.configure_default_column(resizable=True, filter=True, sortable=True)
-    # 숫자 칼럼 가운데 정렬
-    for col in date_cols + chg_cols:
-        gb.configure_column(col, cellStyle={"textAlign": "center"})
-
-
-    def get_row_style_js():
-        return JsCode("""
-        function(params) {
-            if (params.node.rowIndex === 0) {
-                return {
-                    'backgroundColor': '#1565c0',
-                    'color': 'white',
-                    'fontWeight': 'bold'
-                }
-            } else {
-                return {
-                    'fontFamily': 'inherit',
-                    'paddingLeft': '20px'
-                }
-            }
-        }
-        """)
-
-
-    # '항목' 컬럼: 들여쓰기 위해 cell renderer 지정 (첫행은 그대로, 이후 한칸 들여쓰기)
-    indent_js = JsCode("""
-    function(params) {
-        if (params.node.rowIndex === 0) {
-            return params.value;
-        } else {
-            return '\\u00A0\\u00A0' + params.value;
-        }
-    }
-    """)
-
-    gb.configure_column("항목", cellRenderer=indent_js)
-
-    # row style 전체 적용
-    gb.configure_grid_options(getRowStyle=get_row_style_js())
-
-    # 표를 가로로 스크롤 없이 보여주기 위해 width 확보
-    AgGrid(
-        transposed,
-        gridOptions=gb.build(),
-        height=400,
-        width='100%',
-        fit_columns_on_grid_load=True,
-        theme="streamlit",
-        allow_unsafe_jscode=True
-    )
-
-    # 2개 열로 나누기
-    col1, col2 = st.columns(2)
-
-    # ----- (1) 기존 막대그래프는 왼쪽 열 col1에 표시 -----
-    with col1:
-
-        # chg1~chg3 관련 컬럼명 및 color, 레이블 추출
-        chg_cols = ["Chg1", "Chg2", "Chg3"]
-        bar_colors = [
-            "rgb(245,130,32)",  # chg1
-            "rgb(4,59,114)",  # chg2
-            "rgb(0,169,206)"  # chg3
-        ]
-
-        # transposed 데이터프레임의 항목이름과 chg1~chg3 값 추출
-        x_vals = transposed["항목"].tolist()
-        y1 = transposed[chg_cols[0]].tolist()
-        y2 = transposed[chg_cols[1]].tolist()
-        y3 = transposed[chg_cols[2]].tolist()
-
-        # chg1~chg3의 레이블은 테이블의 2~4번째 칼럼명(날짜)
-        chg_labels = list(transposed.columns[1:4])
-
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y1,
-            name=chg_labels[0],
-            marker_color=bar_colors[0]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y2,
-            name=chg_labels[1],
-            marker_color=bar_colors[1]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y3,
-            name=chg_labels[2],
-            marker_color=bar_colors[2]
-        ))
-
-        fig.update_layout(
-            barmode='group',
-            xaxis_title="항목",
-            yaxis_title="변화량",
-            margin=dict(l=20, r=20, t=40, b=40),
-            legend_title="날짜"
-        )
-
-        st.subheader("Change")
-        st.plotly_chart(fig, use_container_width=True)
-
-    # ----- (2) ISM 구성 6개 항목 시계열 라인차트는 오른쪽 열 col2에 표시 -----
-    # 필요한 항목들
-    ism_items = ["ISM Man. PMI", "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories"]
-
-    # 날짜 컬럼명 추정 (예시: "날짜" 또는 "Date"), transposed df에는 없음 → 원본 df 필요
-    # 일반적으로 데이터의 원본이 "data" 또는 유사한 df임을 가정
-    # 아래 data 변수에 해당하는 실제 데이터프레임 이름으로 교체하세요.
-
-    # 예: data = pd.read_csv(...)
-
-    # 여기서는 transposed가 만들어진 기반 dataframe을 pmi_df라고 가정
-    # 반드시 아래 변수명을 실제 데이터프레임에 맞게 수정하세요!
-    try:
-        base_df = raw_df.copy()
-    except NameError:
-        base_df = None
-
-    if base_df is not None:
-        # 날짜 컬럼 자동 추출 시도
-        date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
-        if len(date_col_candidates) > 0:
-            date_col = date_col_candidates[0]
-        else:
-            date_col = base_df.columns[0]  # 첫 번째 컬럼
-
-        # 날짜타입 변환
-        base_df[date_col] = pd.to_datetime(base_df[date_col])
-
-        # 날짜 선택: 기본은 2022년 1월 1일~
-        min_date = base_df[date_col].min()
-        max_date = base_df[date_col].max()
-        default_start = pd.to_datetime("2023-01-01")
-        default_start = max(default_start, min_date)
-
-        with col2:
-            st.subheader("Time Series")
-
-            # 시작일과 종료일을 별도로 선택
-            col_start, col_end = st.columns(2)
-
-            with col_start:
-                start_date_input = st.date_input(
-                    "시작일",
-                    value=default_start.date(),
-                    min_value=min_date.date(),
-                    max_value=max_date.date(),
-                    key="ism_start_date"
-                )
-
-            with col_end:
-                end_date_input = st.date_input(
-                    "종료일",
-                    value=max_date.date(),
-                    min_value=min_date.date(),
-                    max_value=max_date.date(),
-                    key="ism_end_date"
-                )
-
-            start_date = pd.to_datetime(start_date_input)
-            end_date = pd.to_datetime(end_date_input)
-
-            # 시작일이 종료일보다 늦으면 경고
-            if start_date > end_date:
-                st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
-                end_date = start_date  # 자동 조정 또는 차트를 그리지 않음
-
-            mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
-            plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
-
-            ism_fig = go.Figure()
-            ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
-
-            for i, col in enumerate(ism_items):
-                if col in plot_df.columns:
-                    ism_fig.add_trace(
-                        go.Scatter(
-                            x=plot_df[date_col],
-                            y=plot_df[col],
-                            mode="lines+markers",
-                            name=col,
-                            line=dict(color=ism_colors[i % len(ism_colors)])
-                        )
-                    )
-
-            ism_fig.update_layout(
-                xaxis_title="날짜",
-                yaxis_title="수치",
-                legend_title="항목",
-                margin=dict(l=20, r=20, t=40, b=40)
-            )
-
-            st.plotly_chart(ism_fig, use_container_width=True)
