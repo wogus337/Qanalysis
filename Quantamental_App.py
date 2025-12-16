@@ -831,7 +831,7 @@ with tab1:
 
     # 경우의 수 계산
     case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
-    st.subheader(f"I. 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
+    st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
 
     # 컬럼명 한글화
     if len(selected_summary_df) > 0:
@@ -967,7 +967,7 @@ with tab1:
 
     # 각 지표별 상태 표시
     st.markdown("---")
-    st.subheader("II. 지표별 현재 상태")
+    st.subheader("(2) 지표별 현재 상태")
 
     indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
                       'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
@@ -1170,7 +1170,7 @@ with tab1:
 
     # 차트 표시
     st.markdown("---")
-    st.subheader("시계열 차트")
+    st.subheader("(3) 시계열 차트")
     st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
     # 지표별로 그룹화
     indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW', 
@@ -1276,6 +1276,7 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
+
 
 
 
