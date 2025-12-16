@@ -1752,11 +1752,3 @@ with tab3:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
-
-
-
-
-
-
-
-
