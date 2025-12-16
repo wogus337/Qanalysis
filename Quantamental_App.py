@@ -1169,6 +1169,7 @@ with tab1:
                         st.markdown(f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다. 현재 수익은 {perf_str} 입니다.**")
 
     # 차트 표시
+    st.markdown("---")
     st.subheader("시계열 차트")
     st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
     # 지표별로 그룹화
@@ -1275,6 +1276,7 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
+
 
 
 
