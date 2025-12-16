@@ -825,7 +825,7 @@ def run_analysis(raw_df):
 
 
 # 탭 생성
-tab1, tab2 = st.tabs(["US Man.PMI", FDS"])
+tab1, tab2 = st.tabs(["US Man.PMI", "FDS"])
 
 with tab1:
     st.header("US ISM Man. PMI")
@@ -1569,3 +1569,4 @@ with tab2:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
