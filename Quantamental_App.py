@@ -1255,7 +1255,7 @@ with tab2:
         st.subheader("Change")
         st.plotly_chart(fig, use_container_width=True)
     
-    ism_items = ["ISM Srv. PMI", "Business Activity", "New Orders", "Employment", "Supplier Deliveries"]
+    srv_items = ["ISM Srv. PMI", "Business Activity", "New Orders", "Employment", "Supplier Deliveries"]
     
     try:
         base_df = raw_df.copy()
@@ -1287,7 +1287,7 @@ with tab2:
                     value=default_start.date(),
                     min_value=min_date.date(),
                     max_value=max_date.date(),
-                    key="ism_start_date"
+                    key="srv_start_date"
                 )
             
             with col_end:
@@ -1296,7 +1296,7 @@ with tab2:
                     value=max_date.date(),
                     min_value=min_date.date(),
                     max_value=max_date.date(),
-                    key="ism_end_date"
+                    key="srv_end_date"
                 )
             
             start_date = pd.to_datetime(start_date_input)
@@ -1307,12 +1307,12 @@ with tab2:
                 end_date = start_date
             
             mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
-            plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
+            plot_df = base_df.loc[mask, [date_col] + [col for col in srv_items if col in base_df.columns]].copy()
             
-            ism_fig = go.Figure()
-            ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
+            srv_fig = go.Figure()
+            srv_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900"]
             
-            for i, col in enumerate(ism_items):
+            for i, col in enumerate(srv_items):
                 if col in plot_df.columns:
                     ism_fig.add_trace(
                         go.Scatter(
@@ -1320,18 +1320,18 @@ with tab2:
                             y=plot_df[col],
                             mode="lines+markers",
                             name=col,
-                            line=dict(color=ism_colors[i % len(ism_colors)])
+                            line=dict(color=ism_colors[i % len(srv_colors)])
                         )
                     )
             
-            ism_fig.update_layout(
+            srv_fig.update_layout(
                 xaxis_title="날짜",
                 yaxis_title="수치",
                 legend_title="항목",
                 margin=dict(l=20, r=20, t=40, b=40)
             )
             
-            st.plotly_chart(ism_fig, use_container_width=True)
+            st.plotly_chart(srv_fig, use_container_width=True)
             
 with tab3:
     st.header("Fractal Dimension Trading Analysis")
@@ -1752,6 +1752,7 @@ with tab3:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
 
 
 
