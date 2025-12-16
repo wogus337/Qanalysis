@@ -30,7 +30,6 @@ from dataclasses import dataclass
 token = st.secrets["CEIC_token"]
 Ceic.set_token(token)
 
-
 def clean_unit(u):
     if u is None or pd.isna(u):
         return u
@@ -854,7 +853,7 @@ with tab1:
         # 필요없는 컬럼 제거 (slope_metric, perf_metric, fd_level_lookback)
         display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
         
-        # Hit Ratio와 평균성과 컬럼 포맷팅
+        # Hit Ratio, 평균성과, FD기준 컬럼 포맷팅
         if 'Hit Ratio' in display_df.columns:
             display_df['Hit Ratio'] = display_df['Hit Ratio'].apply(
                 lambda x: f"{x*100:.1f}%" if pd.notna(x) else ""
@@ -862,6 +861,10 @@ with tab1:
         if '평균성과' in display_df.columns:
             display_df['평균성과'] = display_df['평균성과'].apply(
                 lambda x: f"{x:.4f}" if pd.notna(x) else ""
+            )
+        if 'FD기준' in display_df.columns:
+            display_df['FD기준'] = display_df['FD기준'].apply(
+                lambda x: f"{x:.2f}" if pd.notna(x) else ""
             )
         
         # AgGrid 설정
@@ -871,6 +874,12 @@ with tab1:
             sortable=True,
             filterable=True
         )
+        # 모든 컬럼에 가운데 정렬 적용
+        for col in display_df.columns:
+            gb.configure_column(
+                col,
+                cellStyle={"textAlign": "center", "display": "flex", "justifyContent": "center", "alignItems": "center"}
+            )
         gb.configure_pagination(
             enabled=True,
             paginationAutoPageSize=False,
@@ -878,6 +887,18 @@ with tab1:
         )
         gb.configure_selection('single')
         grid_options = gb.build()
+        
+        # AgGrid CSS 스타일 추가
+        st.markdown("""
+        <style>
+        .ag-cell {
+            text-align: center !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
         AgGrid(
             display_df,
@@ -1164,4 +1185,5 @@ with tab1:
 with tab2:
     st.header("US Inflation")
     st.info("US Inflation 분석 페이지입니다.")
+
 
