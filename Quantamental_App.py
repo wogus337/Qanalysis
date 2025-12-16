@@ -1314,13 +1314,13 @@ with tab2:
             
             for i, col in enumerate(srv_items):
                 if col in plot_df.columns:
-                    ism_fig.add_trace(
+                    srv_fig.add_trace(
                         go.Scatter(
                             x=plot_df[date_col],
                             y=plot_df[col],
                             mode="lines+markers",
                             name=col,
-                            line=dict(color=ism_colors[i % len(srv_colors)])
+                            line=dict(color=srv_colors[i % len(srv_colors)])
                         )
                     )
             
@@ -1752,6 +1752,7 @@ with tab3:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
 
 
 
