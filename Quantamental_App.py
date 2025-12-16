@@ -854,22 +854,22 @@ with tab1:
         # 필요없는 컬럼 제거 (slope_metric, perf_metric, fd_level_lookback)
         display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
         
+        # Hit Ratio와 평균성과 컬럼 포맷팅
+        if 'Hit Ratio' in display_df.columns:
+            display_df['Hit Ratio'] = display_df['Hit Ratio'].apply(
+                lambda x: f"{x*100:.1f}%" if pd.notna(x) else ""
+            )
+        if '평균성과' in display_df.columns:
+            display_df['평균성과'] = display_df['평균성과'].apply(
+                lambda x: f"{x:.4f}" if pd.notna(x) else ""
+            )
+        
         # AgGrid 설정
         gb = GridOptionsBuilder.from_dataframe(display_df)
         gb.configure_default_column(
             resizable=True,
             sortable=True,
             filterable=True
-        )
-        # Hit Ratio 컬럼 포맷팅 (소숫점 첫째자리까지 백분율)
-        gb.configure_column(
-            'Hit Ratio',
-            valueFormatter="params.value != null ? (params.value * 100).toFixed(1) + '%' : ''"
-        )
-        # 평균성과 컬럼 포맷팅 (소숫점 넷째자리까지)
-        gb.configure_column(
-            '평균성과',
-            valueFormatter="params.value != null ? params.value.toFixed(4) : ''"
         )
         gb.configure_pagination(
             enabled=True,
