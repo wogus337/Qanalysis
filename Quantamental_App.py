@@ -11,6 +11,7 @@ import numpy as np
 import itertools
 from ceic_api_client.pyceic import Ceic
 import streamlit as st
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 try:
     import plotly.graph_objects as go
@@ -853,7 +854,29 @@ with tab1:
         # 필요없는 컬럼 제거 (slope_metric, perf_metric, fd_level_lookback)
         display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
         
-        st.dataframe(display_df, use_container_width=True)
+        # AgGrid 설정
+        gb = GridOptionsBuilder.from_dataframe(display_df)
+        gb.configure_default_column(
+            resizable=True,
+            sortable=True,
+            filterable=True
+        )
+        gb.configure_pagination(
+            enabled=True,
+            paginationAutoPageSize=False,
+            paginationPageSize=20
+        )
+        gb.configure_selection('single')
+        grid_options = gb.build()
+        
+        AgGrid(
+            display_df,
+            gridOptions=grid_options,
+            height=400,
+            width='100%',
+            theme='streamlit',
+            allow_unsafe_jscode=True
+        )
         
         # 설명 텍스트
         st.markdown("""
