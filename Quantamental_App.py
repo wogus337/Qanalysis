@@ -542,7 +542,7 @@ st.title("Quantamental Analysis Dashboard")
 # ISM PMI 데이터 로딩 함수 (캐싱 추가)
 @st.cache_data(ttl=604800)  # 1주일 (604800초)
 def load_ism_pmi_data():
-    """ISM PMI 데이터를 로드합니다."""
+    """ISM Man. PMI 데이터를 로드합니다."""
     codes_U = ['41044601',
                '41044701', '41044801', '41045501', '41044901', '41045001',
                '41045101', '41045201', '41045301', '41045401', '212050202']
@@ -577,6 +577,43 @@ def load_ism_pmi_data():
     
     return raw_df
 
+@st.cache_data(ttl=604800)  # 1주일 (604800초)
+def load_ism_srv_data():
+    """ISM Srv. PMI 데이터를 로드합니다."""
+    codes_S = ['212050702',
+               '41045601', '41045701', '41046501', '41045901', '41045801',
+               '41046001', '41046101', '41046201', '41046301', '41046401']
+    
+    df_S = Ceic.series(codes_S, start_date='2025-01-01').as_pandas()
+    meta_S = Ceic.series_metadata(codes_S).as_pandas()
+    
+    meta_S["name"] = (
+        meta_S["name"]
+        .str.replace("Report On Business: Purchasing Manager Index (PMI): Services", "ISM Srv. PMI", regex=False)
+        .str.replace("Report On Business: PMI: Services: ", "", regex=False)
+        .str.replace(" Index", "", regex=False)
+    )
+    
+    df_S['id'] = df_S['id'].astype(str)
+    meta_S['id'] = meta_S['id'].astype(str)
+    df_pivot = df_S.pivot(index='date', columns='id', values='value')
+    id_to_unit = meta_S.set_index('id')['name']
+    df_pivot = df_pivot.rename(columns=lambda x: clean_unit(id_to_unit.get(x, x)))
+    df_S_tr = df_pivot.sort_index()
+    df_S_tr = df_S_tr.reset_index().rename(columns={'index': 'date'})
+    df_S_tr = df_S_tr[["date", "ISM Srv. PMI",
+                       "Business Activity", "New Orders", "Employment", "Supplier Deliveries", "Backlog of Orders",
+                       "New Export Orders", "Imports", "Inventory Change", "Inventory Sentiment", "Prices"]]
+    
+    df_oriS = pd.read_csv('ori_SPMI.csv')
+    df_oriS['date'] = pd.to_datetime(df_oriS['date'])
+    df_S_tr['date'] = pd.to_datetime(df_S_tr['date'])
+    df_S = pd.concat([df_oriS, df_S_tr], ignore_index=True)
+    raw_df = df_S.copy()
+    raw_df = raw_df[raw_df['date'] >= '1992-01-01']
+    
+    return raw_df
+    
 # 데이터 로딩 및 분석 실행
 @st.cache_data(ttl=604800)  # 1주일
 def load_and_analyze_data():
@@ -840,7 +877,7 @@ def run_analysis(raw_df):
     return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
 # 탭 생성
-tab1, tab2 = st.tabs(["US Man.PMI", "FDS"])
+tab1, tab2, tab3 = st.tabs(["US Man.PMI", "US Srv.PMI", "FDS"])
 
 with tab1:
     st.header("US ISM Man. PMI")
@@ -1070,6 +1107,233 @@ with tab1:
             st.plotly_chart(ism_fig, use_container_width=True)
 
 with tab2:
+    st.header("US ISM Srv. PMI")
+    
+    # 새로고침 버튼
+    col_btn, col_info = st.columns([10, 1])
+    with col_btn:
+        if st.button("새로고침(30초 이내)", key="refresh_srv", help="최신 데이터를 즉시 불러옵니다"):
+            load_ism_srv_data.clear()
+            st.success("데이터를 새로 불러오는 중...")
+            st.rerun()    
+        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+    
+    # 캐싱된 함수 호출
+    raw_df = load_ism_srv_data()
+    
+    # 데이터의 최신 날짜 표시
+    if len(raw_df) > 0:
+        latest_date = raw_df['date'].max()
+        st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+    
+    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+    n_show = 6
+    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+    
+    df_for_disp = raw_df.copy()
+    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+    df_for_disp = df_for_disp.reset_index(drop=True)
+    df_for_disp_disp = df_for_disp.drop(columns=['date'])
+    
+    original_columns = list(df_for_disp_disp.columns)
+    
+    transposed = df_for_disp_disp.T
+    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+    transposed.index.name = None
+    transposed.reset_index(inplace=True)
+    transposed.rename(columns={'index': '항목'}, inplace=True)
+    
+    delta_cols = []
+    for i in range(1, n_show):
+        chg_col = f'Chg{i}'
+        delta_vals = transposed.iloc[:, i + 1] - transposed.iloc[:, i]
+        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
+        delta_cols.append((chg_col, delta_vals))
+        transposed[chg_col] = delta_vals
+    
+    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
+    transposed = transposed[['항목'] + date_cols + chg_cols]
+    
+    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+    transposed = transposed.sort_values('항목').reset_index(drop=True)
+    
+    st.subheader("미국 ISM 서비스업 PMI")
+    
+    gb = GridOptionsBuilder.from_dataframe(transposed)
+    gb.configure_default_column(resizable=True, filter=True, sortable=True)
+    
+    for col in date_cols + chg_cols:
+        gb.configure_column(col, cellStyle={"textAlign": "center"})
+    
+    def get_row_style_js():
+        return JsCode("""
+        function(params) {
+            if (params.node.rowIndex === 0) {
+                return {
+                    'backgroundColor': '#1565c0',
+                    'color': 'white',
+                    'fontWeight': 'bold'
+                }
+            } else {
+                return {
+                    'fontFamily': 'inherit',
+                    'paddingLeft': '20px'
+                }
+            }
+        }
+        """)
+    
+    indent_js = JsCode("""
+    function(params) {
+        if (params.node.rowIndex === 0) {
+            return params.value;
+        } else {
+            return '\\u00A0\\u00A0' + params.value;
+        }
+    }
+    """)
+    
+    gb.configure_column("항목", cellRenderer=indent_js)
+    gb.configure_grid_options(getRowStyle=get_row_style_js())
+    
+    AgGrid(
+        transposed,
+        gridOptions=gb.build(),
+        height=400,
+        width='100%',
+        fit_columns_on_grid_load=True,
+        theme="streamlit",
+        allow_unsafe_jscode=True
+    )
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        chg_cols = ["Chg1", "Chg2", "Chg3"]
+        bar_colors = [
+            "rgb(245,130,32)",
+            "rgb(4,59,114)",
+            "rgb(0,169,206)"
+        ]
+        
+        x_vals = transposed["항목"].tolist()
+        y1 = transposed[chg_cols[0]].tolist()
+        y2 = transposed[chg_cols[1]].tolist()
+        y3 = transposed[chg_cols[2]].tolist()
+        
+        chg_labels = list(transposed.columns[1:4])
+        
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=y1,
+            name=chg_labels[0],
+            marker_color=bar_colors[0]
+        ))
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=y2,
+            name=chg_labels[1],
+            marker_color=bar_colors[1]
+        ))
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=y3,
+            name=chg_labels[2],
+            marker_color=bar_colors[2]
+        ))
+        
+        fig.update_layout(
+            barmode='group',
+            xaxis_title="항목",
+            yaxis_title="변화량",
+            margin=dict(l=20, r=20, t=40, b=40),
+            legend_title="날짜"
+        )
+        
+        st.subheader("Change")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    ism_items = ["ISM Srv. PMI", "Business Activity", "New Orders", "Employment", "Supplier Deliveries"]
+    
+    try:
+        base_df = raw_df.copy()
+    except NameError:
+        base_df = None
+    
+    if base_df is not None:
+        date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
+        if len(date_col_candidates) > 0:
+            date_col = date_col_candidates[0]
+        else:
+            date_col = base_df.columns[0]
+        
+        base_df[date_col] = pd.to_datetime(base_df[date_col])
+        
+        min_date = base_df[date_col].min()
+        max_date = base_df[date_col].max()
+        default_start = pd.to_datetime("2023-01-01")
+        default_start = max(default_start, min_date)
+        
+        with col2:
+            st.subheader("Time Series")
+            
+            col_start, col_end = st.columns(2)
+            
+            with col_start:
+                start_date_input = st.date_input(
+                    "시작일",
+                    value=default_start.date(),
+                    min_value=min_date.date(),
+                    max_value=max_date.date(),
+                    key="ism_start_date"
+                )
+            
+            with col_end:
+                end_date_input = st.date_input(
+                    "종료일",
+                    value=max_date.date(),
+                    min_value=min_date.date(),
+                    max_value=max_date.date(),
+                    key="ism_end_date"
+                )
+            
+            start_date = pd.to_datetime(start_date_input)
+            end_date = pd.to_datetime(end_date_input)
+            
+            if start_date > end_date:
+                st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
+                end_date = start_date
+            
+            mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
+            plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
+            
+            ism_fig = go.Figure()
+            ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
+            
+            for i, col in enumerate(ism_items):
+                if col in plot_df.columns:
+                    ism_fig.add_trace(
+                        go.Scatter(
+                            x=plot_df[date_col],
+                            y=plot_df[col],
+                            mode="lines+markers",
+                            name=col,
+                            line=dict(color=ism_colors[i % len(ism_colors)])
+                        )
+                    )
+            
+            ism_fig.update_layout(
+                xaxis_title="날짜",
+                yaxis_title="수치",
+                legend_title="항목",
+                margin=dict(l=20, r=20, t=40, b=40)
+            )
+            
+            st.plotly_chart(ism_fig, use_container_width=True)
+            
+with tab3:
     st.header("Fractal Dimension Trading Analysis")
     
     # 새로고침 버튼
@@ -1488,6 +1752,7 @@ with tab2:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
 
 
 
