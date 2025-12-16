@@ -1081,25 +1081,64 @@ with tab1:
                     trading_period = ls['trading_period']
                     elapsed_days = (today - ls['entry_date']).days + 1
                     
-                    # 시그널 연장 여부 확인
+                    # 시그널 연장 여부 확인 및 새로운 목표 종료일 계산
+                    # 목표트레이딩일보다 경과한 일수가 많으면 시그널 연장 이벤트가 있었음
                     is_extended = elapsed_days > trading_period
                     extension_note = ""
+                    current_target_end_date = ls['expected_end_date']
+                    current_target_period = trading_period
+                    
                     if is_extended:
-                        # 연장 발생일이 있으면 표시
-                        if ls.get('extension_dates_str', ''):
-                            if ls['extension_flag'] == 'Y' and ls['extension_reason']:
-                                extension_note = f" (시그널 연장 발생 {ls['extension_dates_str']}: {ls['extension_reason']})"
+                        # 연장 발생일이 있으면 마지막 연장 발생일부터 새로운 목표 종료일 계산
+                        if ls.get('extension_dates_str', '') and ls['extension_dates_str'].strip():
+                            # 연장 발생일들을 파싱 (쉼표로 구분)
+                            extension_dates_list = [d.strip() for d in ls['extension_dates_str'].split(',')]
+                            extension_dates_parsed = []
+                            for ext_date_str in extension_dates_list:
+                                try:
+                                    ext_date = pd.to_datetime(ext_date_str)
+                                    extension_dates_parsed.append(ext_date)
+                                except:
+                                    continue
+                            
+                            if extension_dates_parsed:
+                                # 마지막 연장 발생일 찾기
+                                last_extension_date = max(extension_dates_parsed)
+                                # 마지막 연장 발생일부터 새로운 목표 종료일 계산
+                                current_target_end_date = last_extension_date + pd.Timedelta(days=trading_period)
+                                # 현재 목표 기간 계산 (마지막 연장 발생일부터 오늘까지의 기간)
+                                days_since_last_extension = (today - last_extension_date).days + 1
+                                current_target_period = days_since_last_extension
+                                
+                                # 연장 정보를 한 줄로 표시
+                                extension_dates_display = ls['extension_dates_str']
+                                if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
+                                    extension_note = f", 시그널 연장 발생 {extension_dates_display} ({ls['extension_reason']})"
+                                else:
+                                    extension_note = f", 시그널 연장 발생 {extension_dates_display}"
                             else:
-                                extension_note = f" (시그널 연장 발생 {ls['extension_dates_str']})"
+                                # 파싱 실패 시 기본 로직 사용
+                                extension_start_date = ls['expected_end_date']
+                                extension_start_date_str = extension_start_date.strftime('%Y-%m-%d')
+                                extended_days = elapsed_days - trading_period
+                                if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
+                                    extension_note = f", 시그널 연장 발생 {extension_start_date_str}부터 {extended_days}일 연장됨 ({ls['extension_reason']})"
+                                else:
+                                    extension_note = f", 시그널 연장 발생 {extension_start_date_str}부터 {extended_days}일 연장됨"
                         else:
-                            # 연장 발생일이 없으면 (진행 중인 트레이딩) 계산
-                            # 마지막 연장 발생일 추정: expected_end_date - trading_period
-                            last_extension_date = ls['expected_end_date'] - pd.Timedelta(days=trading_period)
-                            last_extension_date_str = last_extension_date.strftime('%Y-%m-%d')
-                            if ls['extension_flag'] == 'Y' and ls['extension_reason']:
-                                extension_note = f" (시그널 연장 발생 {last_extension_date_str}: {ls['extension_reason']})"
+                            # 연장 발생일이 없으면 (진행 중인 트레이딩) 목표 종료일 이후부터 연장이 발생한 것으로 판단
+                            extension_start_date = ls['expected_end_date']
+                            extension_start_date_str = extension_start_date.strftime('%Y-%m-%d')
+                            extended_days = elapsed_days - trading_period
+                            # 연장 시작일부터 새로운 목표 종료일 계산
+                            current_target_end_date = extension_start_date + pd.Timedelta(days=trading_period)
+                            days_since_extension = (today - extension_start_date).days + 1
+                            current_target_period = days_since_extension
+                            
+                            if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
+                                extension_note = f", 시그널 연장 발생 {extension_start_date_str} ({ls['extension_reason']})"
                             else:
-                                extension_note = f" (시그널 연장 발생 {last_extension_date_str})"
+                                extension_note = f", 시그널 연장 발생 {extension_start_date_str}"
                     
                     # 현재 수익 계산
                     current_perf = None
@@ -1123,7 +1162,11 @@ with tab1:
                     else:
                         perf_str = "N/A"
                     
-                    st.markdown(f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다{extension_note}. 현재 수익은 {perf_str} 입니다.**")
+                    # 목표트레이딩일 표시 (연장이 있으면 새로운 목표 기간 사용)
+                    if is_extended:
+                        st.markdown(f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {current_target_period}일 중 {elapsed_days}일이 경과했습니다{extension_note}. 현재 수익은 {perf_str} 입니다.**")
+                    else:
+                        st.markdown(f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다. 현재 수익은 {perf_str} 입니다.**")
 
     # 차트 표시
     st.header("시계열 차트")
