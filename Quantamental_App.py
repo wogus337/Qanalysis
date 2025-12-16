@@ -878,7 +878,8 @@ with tab1:
         for col in display_df.columns:
             gb.configure_column(
                 col,
-                cellStyle={"textAlign": "center", "display": "flex", "justifyContent": "center", "alignItems": "center"}
+                cellStyle={"textAlign": "center", "display": "flex", "justifyContent": "center", "alignItems": "center"},
+                headerClass="ag-center-header"
             )
         gb.configure_pagination(
             enabled=True,
@@ -897,20 +898,33 @@ with tab1:
             align-items: center !important;
             justify-content: center !important;
         }
-        .ag-header-cell {
+        .ag-header-cell,
+        .ag-center-header {
             text-align: center !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
         }
         .ag-header-cell-label {
             justify-content: center !important;
             width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
+        .ag-header-cell-text {
+            margin: 0 auto !important;
+            text-align: center !important;
+        }
+        div[class*="ag-header-cell"] {
+            text-align: center !important;
+        }
+        div[class*="ag-header-cell-label"] {
+            justify-content: center !important;
+            text-align: center !important;
         }
         </style>
         """, unsafe_allow_html=True)
         
-        AgGrid(
+        # AgGrid 렌더링
+        grid_response = AgGrid(
             display_df,
             gridOptions=grid_options,
             height=400,
@@ -918,6 +932,29 @@ with tab1:
             theme='streamlit',
             allow_unsafe_jscode=True
         )
+        
+        # JavaScript로 헤더 정렬 강제 적용 (AgGrid 렌더링 후)
+        st.markdown("""
+        <script>
+        function centerHeaders() {
+            var headers = document.querySelectorAll('.ag-header-cell-label');
+            headers.forEach(function(header) {
+                header.style.justifyContent = 'center';
+                header.style.textAlign = 'center';
+                header.style.display = 'flex';
+                header.style.alignItems = 'center';
+            });
+            var headerTexts = document.querySelectorAll('.ag-header-cell-text');
+            headerTexts.forEach(function(text) {
+                text.style.margin = '0 auto';
+                text.style.textAlign = 'center';
+            });
+        }
+        setTimeout(centerHeaders, 500);
+        setTimeout(centerHeaders, 1000);
+        setTimeout(centerHeaders, 2000);
+        </script>
+        """, unsafe_allow_html=True)
         
         # 설명 텍스트
         st.markdown("""
