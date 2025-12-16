@@ -861,6 +861,16 @@ with tab1:
             sortable=True,
             filterable=True
         )
+        # Hit Ratio 컬럼 포맷팅 (소숫점 첫째자리까지 백분율)
+        gb.configure_column(
+            'Hit Ratio',
+            valueFormatter="params.value != null ? (params.value * 100).toFixed(1) + '%' : ''"
+        )
+        # 평균성과 컬럼 포맷팅 (소숫점 넷째자리까지)
+        gb.configure_column(
+            '평균성과',
+            valueFormatter="params.value != null ? params.value.toFixed(4) : ''"
+        )
         gb.configure_pagination(
             enabled=True,
             paginationAutoPageSize=False,
