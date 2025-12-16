@@ -848,7 +848,7 @@ with tab1:
     # 새로고침 버튼
     col_btn, col_info = st.columns([10, 1])
     with col_btn:
-        if st.button("새로고침", key="refresh_ism", help="최신 데이터를 즉시 불러옵니다"):
+        if st.button("새로고침(30초 이내)", key="refresh_ism", help="최신 데이터를 즉시 불러옵니다"):
             load_ism_pmi_data.clear()
             st.success("데이터를 새로 불러오는 중...")
             st.rerun()    
@@ -1075,7 +1075,7 @@ with tab2:
     # 새로고침 버튼
     col_btn, col_info = st.columns([10, 1])
     with col_btn:
-        if st.button("새로고침", key="refresh_fds", help="최신 데이터를 즉시 불러옵니다"):
+        if st.button("새로고침(3분 이내)", key="refresh_fds", help="최신 데이터를 즉시 불러옵니다"):
             load_and_analyze_data.clear()
             run_analysis.clear()
             st.success("데이터를 새로 불러오는 중...")
@@ -1488,5 +1488,6 @@ with tab2:
         for idx in range(len(cases), max_cols):
             with cols[idx]:
                 st.empty()
+
 
 
