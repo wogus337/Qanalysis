@@ -1415,7 +1415,7 @@ with tab1:
                 st.plotly_chart(srv_fig, use_container_width=True)
 
     with subtab3:
-        
+
         st.subheader("US Non Farm Payroll(sa)")
 
         # 새로고침 버튼
@@ -1446,7 +1446,7 @@ with tab1:
         df_for_disp_disp = df_for_disp.drop(columns=['date'])
 
         original_columns = list(df_for_disp_disp.columns)
-        #original_columns = ['Non Farm Payroll(sa)']
+        # original_columns = ['Non Farm Payroll(sa)']
 
         transposed = df_for_disp_disp.T
         transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
@@ -1468,7 +1468,79 @@ with tab1:
 
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
-        transposed.loc[transposed["항목"].isin(["Chg. 1st", "Chg. 2nd", "Chg. 3rd"]), ["Chg1", "Chg2", "Chg3", "Chg4", "Chg5"]] = np.nan
+        transposed.loc[transposed["항목"].isin(["Chg. 1st", "Chg. 2nd", "Chg. 3rd"]), ["Chg1", "Chg2", "Chg3", "Chg4",
+                                                                                     "Chg5"]] = np.nan
+
+        split_idx = transposed.index[transposed["항목"].eq("Chg. 1st")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "최근 3개월 revise"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]], ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("Private")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "Private vs. Government"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("Goods Producing")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "Goods vs. Service"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("Natural Resources & Mining (NR)")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "업종별"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("Federal (FG)")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "Government - Sub"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("FG: excl US Postal Service (FD)")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "Federal - Sub"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("SG: Education")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "State - Sub"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
+
+        split_idx = transposed.index[transposed["항목"].eq("LG: Education")][0]
+        insert_row = pd.DataFrame(
+            {col: [np.nan] for col in transposed.columns}
+        )
+        insert_row["항목"] = insert_row["항목"].astype("object")
+        insert_row.loc[0, "항목"] = "Local - Sub"
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
 
         st.subheader("미국 비농업고용(sa)")
 
@@ -1488,58 +1560,105 @@ with tab1:
                         'color': 'white',
                         'fontWeight': 'bold'
                     }
-                } else if (params.node.rowIndex >= 1 && params.node.rowIndex <= 3) {
+                } else if (params.node.rowIndex === 1) {
                     return {
                         'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',
                         'paddingLeft': '20px'
                     }
-                } else if (params.node.rowIndex >= 4 && params.node.rowIndex <= 5) {
+                } else if (params.node.rowIndex >= 2 && params.node.rowIndex <= 4) {
                     return {
                         'fontFamily': 'inherit',
-                        'backgroundColor': '#808080',
-                        'color': 'white',
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex === 5) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',                      
                         'paddingLeft': '20px'
                     }
                 } else if (params.node.rowIndex >= 6 && params.node.rowIndex <= 7) {
                     return {
                         'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'white',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 8 && params.node.rowIndex <= 21) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#808080',
-                        'color': 'white',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 22 && params.node.rowIndex <= 24) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'white',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 25 && params.node.rowIndex <= 26) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#808080',
-                        'color': 'white',
                         'paddingLeft': '40px'
                     }
-                } else if (params.node.rowIndex >= 27 && params.node.rowIndex <= 28) {
+                } else if (params.node.rowIndex === 8) {
                     return {
                         'fontFamily': 'inherit',
                         'backgroundColor': '#BFBFBF',
-                        'color': 'white',
+                        'color': 'black',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 9 && params.node.rowIndex <= 10) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex === 11) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 12 && params.node.rowIndex <= 25) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex === 26) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 27 && params.node.rowIndex <= 29) {
+                    return {
+                        'fontFamily': 'inherit',                        
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex === 30) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',                        
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 31 && params.node.rowIndex <= 32) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex === 33) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',                                              
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 34 && params.node.rowIndex <= 35) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex === 36) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'black',                                                
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 37 && params.node.rowIndex <= 38) {
+                    return {
+                        'fontFamily': 'inherit',
                         'paddingLeft': '40px'
                     }
                 } else {
                     return {
                         'fontFamily': 'inherit',
-                        'backgroundColor': '#808080',
-                        'color': 'white',
                         'paddingLeft': '40px'
                     }
                 }
@@ -2010,6 +2129,7 @@ with tab2:
     with subtab2:
         st.subheader("Transformer FX Signal")
         
+
 
 
 
