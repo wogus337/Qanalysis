@@ -947,8 +947,6 @@ def run_analysis(raw_df):
 
     return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI", "FDS"])
-
 # 탭 생성
 tab1, tab2 = st.tabs(["US Macro", "Signal Model"])
 
@@ -2008,3 +2006,4 @@ with tab2:
     with subtab2:
         st.header("Transformer FX Signal")
         
+
