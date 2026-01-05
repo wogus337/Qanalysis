@@ -947,1051 +947,1064 @@ def run_analysis(raw_df):
 
     return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
-
-# 탭 생성
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI", "FDS"])
 
+# 탭 생성
+tab1, tab2 = st.tabs(["US Macro", "Signal Model"])
+
 with tab1:
-    st.header("US ISM Man. PMI")
+    st.header("US Macro")
 
-    # 새로고침 버튼
-    col_btn, col_info = st.columns([10, 1])
-    with col_btn:
-        if st.button("새로고침(30초 이내)", key="refresh_ism", help="최신 데이터를 즉시 불러옵니다"):
-            load_ism_pmi_data.clear()
-            st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+    subtab1, subtab2, subtab3, subtab4, subtab5 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI"])
 
-    # 캐싱된 함수 호출
-    raw_df = load_ism_pmi_data()
+    with subtab1:
+        st.header("US ISM Man. PMI")
 
-    # 데이터의 최신 날짜 표시
-    if len(raw_df) > 0:
-        latest_date = raw_df['date'].max()
-        st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+        # 새로고침 버튼
+        col_btn, col_info = st.columns([10, 1])
+        with col_btn:
+            if st.button("새로고침(30초 이내)", key="refresh_ism", help="최신 데이터를 즉시 불러옵니다"):
+                load_ism_pmi_data.clear()
+                st.success("데이터를 새로 불러오는 중...")
+                st.rerun()
+            st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
 
-    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
-    n_show = 6
-    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+        # 캐싱된 함수 호출
+        raw_df = load_ism_pmi_data()
 
-    df_for_disp = raw_df.copy()
-    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
-    df_for_disp = df_for_disp.reset_index(drop=True)
-    df_for_disp_disp = df_for_disp.drop(columns=['date'])
+        # 데이터의 최신 날짜 표시
+        if len(raw_df) > 0:
+            latest_date = raw_df['date'].max()
+            st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
 
-    original_columns = list(df_for_disp_disp.columns)
+        # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+        n_show = 6
+        latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
 
-    transposed = df_for_disp_disp.T
-    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    transposed.index.name = None
-    transposed.reset_index(inplace=True)
-    transposed.rename(columns={'index': '항목'}, inplace=True)
+        df_for_disp = raw_df.copy()
+        df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+        df_for_disp = df_for_disp.reset_index(drop=True)
+        df_for_disp_disp = df_for_disp.drop(columns=['date'])
 
-    delta_cols = []
-    for i in range(1, n_show):
-        chg_col = f'Chg{i}'
-        delta_vals = transposed.iloc[:, i] - transposed.iloc[:, i + 1]
-        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
-        delta_cols.append((chg_col, delta_vals))
-        transposed[chg_col] = delta_vals
+        original_columns = list(df_for_disp_disp.columns)
 
-    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
-    transposed = transposed[['항목'] + date_cols + chg_cols]
+        transposed = df_for_disp_disp.T
+        transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        transposed.index.name = None
+        transposed.reset_index(inplace=True)
+        transposed.rename(columns={'index': '항목'}, inplace=True)
 
-    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
-    transposed = transposed.sort_values('항목').reset_index(drop=True)
+        delta_cols = []
+        for i in range(1, n_show):
+            chg_col = f'Chg{i}'
+            delta_vals = transposed.iloc[:, i] - transposed.iloc[:, i + 1]
+            delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
+            delta_cols.append((chg_col, delta_vals))
+            transposed[chg_col] = delta_vals
 
-    st.subheader("미국 ISM 제조업 PMI")
+        date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        chg_cols = [f'Chg{i}' for i in range(1, n_show)]
+        transposed = transposed[['항목'] + date_cols + chg_cols]
 
-    gb = GridOptionsBuilder.from_dataframe(transposed)
-    gb.configure_default_column(resizable=True, filter=True, sortable=True)
+        transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+        transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-    for col in date_cols + chg_cols:
-        gb.configure_column(col, cellStyle={"textAlign": "center"})
+        st.subheader("미국 ISM 제조업 PMI")
+
+        gb = GridOptionsBuilder.from_dataframe(transposed)
+        gb.configure_default_column(resizable=True, filter=True, sortable=True)
+
+        for col in date_cols + chg_cols:
+            gb.configure_column(col, cellStyle={"textAlign": "center"})
 
 
-    def get_row_style_js():
-        return JsCode("""
+        def get_row_style_js():
+            return JsCode("""
+            function(params) {
+                if (params.node.rowIndex === 0) {
+                    return {
+                        'backgroundColor': '#1565c0',
+                        'color': 'white',
+                        'fontWeight': 'bold'
+                    }
+                } else {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '20px'
+                    }
+                }
+            }
+            """)
+
+
+        indent_js = JsCode("""
         function(params) {
             if (params.node.rowIndex === 0) {
-                return {
-                    'backgroundColor': '#1565c0',
-                    'color': 'white',
-                    'fontWeight': 'bold'
-                }
+                return params.value;
             } else {
-                return {
-                    'fontFamily': 'inherit',
-                    'paddingLeft': '20px'
-                }
+                return '\\u00A0\\u00A0' + params.value;
             }
         }
         """)
 
-
-    indent_js = JsCode("""
-    function(params) {
-        if (params.node.rowIndex === 0) {
-            return params.value;
-        } else {
-            return '\\u00A0\\u00A0' + params.value;
-        }
-    }
-    """)
-
-    gb.configure_column("항목", cellRenderer=indent_js)
-    gb.configure_grid_options(getRowStyle=get_row_style_js())
-
-    AgGrid(
-        transposed,
-        gridOptions=gb.build(),
-        height=400,
-        width='100%',
-        fit_columns_on_grid_load=True,
-        theme="streamlit",
-        allow_unsafe_jscode=True
-    )
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        chg_cols = ["Chg1", "Chg2", "Chg3"]
-        bar_colors = [
-            "rgb(245,130,32)",
-            "rgb(4,59,114)",
-            "rgb(0,169,206)"
-        ]
-
-        x_vals = transposed["항목"].tolist()
-        y1 = transposed[chg_cols[0]].tolist()
-        y2 = transposed[chg_cols[1]].tolist()
-        y3 = transposed[chg_cols[2]].tolist()
-
-        chg_labels = list(transposed.columns[1:4])
-
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y1,
-            name=chg_labels[0],
-            marker_color=bar_colors[0]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y2,
-            name=chg_labels[1],
-            marker_color=bar_colors[1]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y3,
-            name=chg_labels[2],
-            marker_color=bar_colors[2]
-        ))
-
-        fig.update_layout(
-            barmode='group',
-            xaxis_title="항목",
-            yaxis_title="변화량",
-            margin=dict(l=20, r=20, t=40, b=40),
-            legend_title="날짜"
-        )
-
-        st.subheader("Change")
-        st.plotly_chart(fig, use_container_width=True)
-
-    ism_items = ["ISM Man. PMI", "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories"]
-
-    try:
-        base_df = raw_df.copy()
-    except NameError:
-        base_df = None
-
-    if base_df is not None:
-        date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
-        if len(date_col_candidates) > 0:
-            date_col = date_col_candidates[0]
-        else:
-            date_col = base_df.columns[0]
-
-        base_df[date_col] = pd.to_datetime(base_df[date_col])
-
-        min_date = base_df[date_col].min()
-        max_date = base_df[date_col].max()
-        default_start = pd.to_datetime("2023-01-01")
-        default_start = max(default_start, min_date)
-
-        with col2:
-            st.subheader("Time Series")
-
-            col_start, col_end = st.columns(2)
-
-            with col_start:
-                start_date_input = st.date_input(
-                    "시작일",
-                    value=default_start.date(),
-                    min_value=min_date.date(),
-                    max_value=max_date.date(),
-                    key="ism_start_date"
-                )
-
-            with col_end:
-                end_date_input = st.date_input(
-                    "종료일",
-                    value=max_date.date(),
-                    min_value=min_date.date(),
-                    max_value=max_date.date(),
-                    key="ism_end_date"
-                )
-
-            start_date = pd.to_datetime(start_date_input)
-            end_date = pd.to_datetime(end_date_input)
-
-            if start_date > end_date:
-                st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
-                end_date = start_date
-
-            mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
-            plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
-
-            ism_fig = go.Figure()
-            ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
-
-            for i, col in enumerate(ism_items):
-                if col in plot_df.columns:
-                    ism_fig.add_trace(
-                        go.Scatter(
-                            x=plot_df[date_col],
-                            y=plot_df[col],
-                            mode="lines+markers",
-                            name=col,
-                            line=dict(color=ism_colors[i % len(ism_colors)])
-                        )
-                    )
-
-            ism_fig.update_layout(
-                xaxis_title="날짜",
-                yaxis_title="수치",
-                legend_title="항목",
-                margin=dict(l=20, r=20, t=40, b=40)
-            )
-
-            st.plotly_chart(ism_fig, use_container_width=True)
-
-with tab2:
-    st.header("US ISM Srv. PMI")
-
-    # 새로고침 버튼
-    col_btn, col_info = st.columns([10, 1])
-    with col_btn:
-        if st.button("새로고침(30초 이내)", key="refresh_srv", help="최신 데이터를 즉시 불러옵니다"):
-            load_ism_srv_data.clear()
-            st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
-
-    # 캐싱된 함수 호출
-    raw_df = load_ism_srv_data()
-
-    # 데이터의 최신 날짜 표시
-    if len(raw_df) > 0:
-        latest_date = raw_df['date'].max()
-        st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
-
-    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
-    n_show = 6
-    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
-
-    df_for_disp = raw_df.copy()
-    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
-    df_for_disp = df_for_disp.reset_index(drop=True)
-    df_for_disp_disp = df_for_disp.drop(columns=['date'])
-
-    original_columns = list(df_for_disp_disp.columns)
-
-    transposed = df_for_disp_disp.T
-    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    transposed.index.name = None
-    transposed.reset_index(inplace=True)
-    transposed.rename(columns={'index': '항목'}, inplace=True)
-
-    delta_cols = []
-    for i in range(1, n_show):
-        chg_col = f'Chg{i}'
-        delta_vals = transposed.iloc[:, i] - transposed.iloc[:, i + 1]
-        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
-        delta_cols.append((chg_col, delta_vals))
-        transposed[chg_col] = delta_vals
-
-    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
-    transposed = transposed[['항목'] + date_cols + chg_cols]
-
-    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
-    transposed = transposed.sort_values('항목').reset_index(drop=True)
-
-    st.subheader("미국 ISM 서비스업 PMI")
-
-    gb = GridOptionsBuilder.from_dataframe(transposed)
-    gb.configure_default_column(resizable=True, filter=True, sortable=True)
-
-    for col in date_cols + chg_cols:
-        gb.configure_column(col, cellStyle={"textAlign": "center"})
-
-
-    def get_row_style_js():
-        return JsCode("""
-        function(params) {
-            if (params.node.rowIndex === 0) {
-                return {
-                    'backgroundColor': '#1565c0',
-                    'color': 'white',
-                    'fontWeight': 'bold'
-                }
-            } else {
-                return {
-                    'fontFamily': 'inherit',
-                    'paddingLeft': '20px'
-                }
-            }
-        }
-        """)
-
-
-    indent_js = JsCode("""
-    function(params) {
-        if (params.node.rowIndex === 0) {
-            return params.value;
-        } else {
-            return '\\u00A0\\u00A0' + params.value;
-        }
-    }
-    """)
-
-    gb.configure_column("항목", cellRenderer=indent_js)
-    gb.configure_grid_options(getRowStyle=get_row_style_js())
-
-    AgGrid(
-        transposed,
-        gridOptions=gb.build(),
-        height=400,
-        width='100%',
-        fit_columns_on_grid_load=True,
-        theme="streamlit",
-        allow_unsafe_jscode=True
-    )
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        chg_cols = ["Chg1", "Chg2", "Chg3"]
-        bar_colors = [
-            "rgb(245,130,32)",
-            "rgb(4,59,114)",
-            "rgb(0,169,206)"
-        ]
-
-        x_vals = transposed["항목"].tolist()
-        y1 = transposed[chg_cols[0]].tolist()
-        y2 = transposed[chg_cols[1]].tolist()
-        y3 = transposed[chg_cols[2]].tolist()
-
-        chg_labels = list(transposed.columns[1:4])
-
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y1,
-            name=chg_labels[0],
-            marker_color=bar_colors[0]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y2,
-            name=chg_labels[1],
-            marker_color=bar_colors[1]
-        ))
-        fig.add_trace(go.Bar(
-            x=x_vals,
-            y=y3,
-            name=chg_labels[2],
-            marker_color=bar_colors[2]
-        ))
-
-        fig.update_layout(
-            barmode='group',
-            xaxis_title="항목",
-            yaxis_title="변화량",
-            margin=dict(l=20, r=20, t=40, b=40),
-            legend_title="날짜"
-        )
-
-        st.subheader("Change")
-        st.plotly_chart(fig, use_container_width=True)
-
-    srv_items = ["ISM Srv. PMI", "Business Activity", "New Orders", "Employment", "Supplier Deliveries"]
-
-    try:
-        base_df = raw_df.copy()
-    except NameError:
-        base_df = None
-
-    if base_df is not None:
-        date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
-        if len(date_col_candidates) > 0:
-            date_col = date_col_candidates[0]
-        else:
-            date_col = base_df.columns[0]
-
-        base_df[date_col] = pd.to_datetime(base_df[date_col])
-
-        min_date = base_df[date_col].min()
-        max_date = base_df[date_col].max()
-        default_start = pd.to_datetime("2023-01-01")
-        default_start = max(default_start, min_date)
-
-        with col2:
-            st.subheader("Time Series")
-
-            col_start, col_end = st.columns(2)
-
-            with col_start:
-                start_date_input = st.date_input(
-                    "시작일",
-                    value=default_start.date(),
-                    min_value=min_date.date(),
-                    max_value=max_date.date(),
-                    key="srv_start_date"
-                )
-
-            with col_end:
-                end_date_input = st.date_input(
-                    "종료일",
-                    value=max_date.date(),
-                    min_value=min_date.date(),
-                    max_value=max_date.date(),
-                    key="srv_end_date"
-                )
-
-            start_date = pd.to_datetime(start_date_input)
-            end_date = pd.to_datetime(end_date_input)
-
-            if start_date > end_date:
-                st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
-                end_date = start_date
-
-            mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
-            plot_df = base_df.loc[mask, [date_col] + [col for col in srv_items if col in base_df.columns]].copy()
-
-            srv_fig = go.Figure()
-            srv_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900"]
-
-            for i, col in enumerate(srv_items):
-                if col in plot_df.columns:
-                    srv_fig.add_trace(
-                        go.Scatter(
-                            x=plot_df[date_col],
-                            y=plot_df[col],
-                            mode="lines+markers",
-                            name=col,
-                            line=dict(color=srv_colors[i % len(srv_colors)])
-                        )
-                    )
-
-            srv_fig.update_layout(
-                xaxis_title="날짜",
-                yaxis_title="수치",
-                legend_title="항목",
-                margin=dict(l=20, r=20, t=40, b=40)
-            )
-
-            st.plotly_chart(srv_fig, use_container_width=True)
-
-with tab3:
-    st.header("US Non Farm Payroll(sa)")
-
-    # 새로고침 버튼
-    col_btn, col_info = st.columns([10, 1])
-    with col_btn:
-        if st.button("새로고침(30초 이내)", key="refresh_nfp", help="최신 데이터를 즉시 불러옵니다"):
-            load_us_nfp_data.clear()
-            st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
-
-    # 캐싱된 함수 호출
-    raw_df = load_us_nfp_data()
-
-    # 데이터의 최신 날짜 표시
-    if len(raw_df) > 0:
-        latest_date = raw_df['date'].max()
-        st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
-
-    # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
-    n_show = 6
-    latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
-
-    df_for_disp = raw_df.copy()
-    df_for_disp = df_for_disp.drop(columns=['Unnamed: 0'])
-    df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
-    df_for_disp = df_for_disp.reset_index(drop=True)
-    df_for_disp_disp = df_for_disp.drop(columns=['date'])
-
-    original_columns = list(df_for_disp_disp.columns)
-    #original_columns = ['Non Farm Payroll(sa)']
-
-    transposed = df_for_disp_disp.T
-    transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    transposed.index.name = None
-    transposed.reset_index(inplace=True)
-    transposed.rename(columns={'index': '항목'}, inplace=True)
-
-    delta_cols = []
-    for i in range(1, n_show):
-        chg_col = f'Chg{i}'
-        delta_vals = transposed.iloc[:, i] - transposed.iloc[:, i + 1]
-        delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
-        delta_cols.append((chg_col, delta_vals))
-        transposed[chg_col] = delta_vals
-
-    date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
-    chg_cols = [f'Chg{i}' for i in range(1, n_show)]
-    transposed = transposed[['항목'] + date_cols + chg_cols]
-
-    transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
-    transposed = transposed.sort_values('항목').reset_index(drop=True)
-    transposed.loc[transposed["항목"].isin(["Chg. 1st", "Chg. 2nd", "Chg. 3rd"]), ["Chg1", "Chg2", "Chg3", "Chg4", "Chg5"]] = np.nan
-
-    st.subheader("미국 비농업고용(sa)")
-
-    gb = GridOptionsBuilder.from_dataframe(transposed)
-    gb.configure_default_column(resizable=True, filter=True, sortable=True)
-
-    for col in date_cols + chg_cols:
-        gb.configure_column(col, cellStyle={"textAlign": "center"})
-
-
-    def get_row_style_js2():
-        return JsCode("""
-        function(params) {
-            if (params.node.rowIndex === 0) {
-                return {
-                    'backgroundColor': '#1565c0',
-                    'color': 'white',
-                    'fontWeight': 'bold'
-                }
-            } else if (params.node.rowIndex >= 1 && params.node.rowIndex <= 3) {
-                return {
-                    'fontFamily': 'inherit',
-                    'paddingLeft': '20px'
-                }
-            } else if (params.node.rowIndex >= 4 && params.node.rowIndex <= 5) {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#808080',
-                    'color': 'white',
-                    'paddingLeft': '20px'
-                }
-            } else if (params.node.rowIndex >= 6 && params.node.rowIndex <= 7) {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#BFBFBF',
-                    'color': 'white',
-                    'paddingLeft': '20px'
-                }
-            } else if (params.node.rowIndex >= 8 && params.node.rowIndex <= 21) {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#808080',
-                    'color': 'white',
-                    'paddingLeft': '20px'
-                }
-            } else if (params.node.rowIndex >= 22 && params.node.rowIndex <= 24) {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#BFBFBF',
-                    'color': 'white',
-                    'paddingLeft': '20px'
-                }
-            } else if (params.node.rowIndex >= 25 && params.node.rowIndex <= 26) {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#808080',
-                    'color': 'white',
-                    'paddingLeft': '40px'
-                }
-            } else if (params.node.rowIndex >= 27 && params.node.rowIndex <= 28) {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#BFBFBF',
-                    'color': 'white',
-                    'paddingLeft': '40px'
-                }
-            } else {
-                return {
-                    'fontFamily': 'inherit',
-                    'backgroundColor': '#808080',
-                    'color': 'white',
-                    'paddingLeft': '40px'
-                }
-            }
-        }
-        """)
-
-
-    indent_js = JsCode("""
-    function(params) {
-        if (params.node.rowIndex === 0) {
-            return params.value;
-        } else {
-            return '\\u00A0\\u00A0' + params.value;
-        }
-    }
-    """)
-
-    gb.configure_column("항목", cellRenderer=indent_js)
-    gb.configure_grid_options(getRowStyle=get_row_style_js2())
-
-    AgGrid(
-        transposed,
-        gridOptions=gb.build(),
-        height=400,
-        width='100%',
-        fit_columns_on_grid_load=True,
-        theme="streamlit",
-        allow_unsafe_jscode=True
-    )
-    ##########################
-    # 여기부터 계속하기
-    ##########################
-    # PMI 보고 차트 코드 참고하기
-
-with tab4:
-    st.header("US CPI")
-
-with tab5:
-    st.header("US PPI")
-
-with tab6:
-    st.header("Fractal Dimension Trading Analysis")
-
-    # 새로고침 버튼
-    col_btn, col_info = st.columns([10, 1])
-    with col_btn:
-        if st.button("새로고침(3분 이내)", key="refresh_fds", help="최신 데이터를 즉시 불러옵니다"):
-            load_and_analyze_data.clear()
-            run_analysis.clear()
-            st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
-
-    # 메인 실행
-    with st.spinner("데이터를 로딩하고 분석을 실행하는 중..."):
-        raw_df = load_and_analyze_data()
-        selected_summary_df, selected_timeseries_results, selected_detail_results = run_analysis(raw_df)
-
-    # 데이터의 최신 날짜 표시
-    if len(raw_df) > 0:
-        latest_date = raw_df['date'].max()
-        st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
-
-    # 요약 테이블 표시
-    today = pd.Timestamp.today().normalize()
-    today_str = today.strftime('%Y-%m-%d')
-
-    case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
-    st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
-
-    if len(selected_summary_df) > 0:
-        display_df = selected_summary_df.copy()
-        display_df = display_df.rename(columns={
-            'analysis_column': '분석지표',
-            'analysis_window': '분석(FD계산)일',
-            'slope_threshold': '직전기울기요건',
-            'trading_period': '트레이딩기간',
-            'fd_level_threshold': 'FD기준',
-            'fd_level_lookback': 'FD Lookback',
-            'slope_metric': 'Slope Metric',
-            'perf_metric': 'Perf Metric',
-            'trade_count': 'Signal발생횟수',
-            'hit_ratio': 'Hit Ratio',
-            'avg_perf': '평균성과'
-        })
-
-        display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
-
-        if 'Hit Ratio' in display_df.columns:
-            display_df['Hit Ratio'] = display_df['Hit Ratio'].apply(
-                lambda x: f"{x * 100:.1f}%" if pd.notna(x) else ""
-            )
-        if '평균성과' in display_df.columns:
-            display_df['평균성과'] = display_df['평균성과'].apply(
-                lambda x: f"{x:.4f}" if pd.notna(x) else ""
-            )
-        if 'FD기준' in display_df.columns:
-            display_df['FD기준'] = display_df['FD기준'].apply(
-                lambda x: f"{x:.2f}" if pd.notna(x) else ""
-            )
-
-        gb = GridOptionsBuilder.from_dataframe(display_df)
-        gb.configure_default_column(
-            resizable=True,
-            sortable=True,
-            filterable=True
-        )
-
-        for col in display_df.columns:
-            gb.configure_column(
-                col,
-                cellStyle={"textAlign": "center", "display": "flex", "justifyContent": "center",
-                           "alignItems": "center"},
-                headerClass="ag-center-header"
-            )
-
-        gb.configure_pagination(
-            enabled=True,
-            paginationAutoPageSize=False,
-            paginationPageSize=20
-        )
-        gb.configure_selection('single')
-        grid_options = gb.build()
-
-        st.markdown("""
-        <style>
-        .ag-cell {
-            text-align: center !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        .ag-header-cell,
-        .ag-center-header {
-            text-align: center !important;
-        }
-        .ag-header-cell-label {
-            justify-content: center !important;
-            width: 100% !important;
-            display: flex !important;
-            align-items: center !important;
-            text-align: center !important;
-        }
-        .ag-header-cell-text {
-            margin: 0 auto !important;
-            text-align: center !important;
-        }
-        div[class*="ag-header-cell"] {
-            text-align: center !important;
-        }
-        div[class*="ag-header-cell-label"] {
-            justify-content: center !important;
-            text-align: center !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-        grid_response = AgGrid(
-            display_df,
-            gridOptions=grid_options,
+        gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_grid_options(getRowStyle=get_row_style_js())
+
+        AgGrid(
+            transposed,
+            gridOptions=gb.build(),
             height=400,
             width='100%',
-            theme='streamlit',
+            fit_columns_on_grid_load=True,
+            theme="streamlit",
             allow_unsafe_jscode=True
         )
 
-        st.markdown("""
-        <script>
-        function centerHeaders() {
-            var headers = document.querySelectorAll('.ag-header-cell-label');
-            headers.forEach(function(header) {
-                header.style.justifyContent = 'center';
-                header.style.textAlign = 'center';
-                header.style.display = 'flex';
-                header.style.alignItems = 'center';
-            });
-            var headerTexts = document.querySelectorAll('.ag-header-cell-text');
-            headerTexts.forEach(function(text) {
-                text.style.margin = '0 auto';
-                text.style.textAlign = 'center';
-            });
-        }
-        setTimeout(centerHeaders, 500);
-        setTimeout(centerHeaders, 1000);
-        setTimeout(centerHeaders, 2000);
-        </script>
-        """, unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
 
-        st.markdown("""
-        <div style="font-size: 0.85em; color: #666;">
-        지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br>    
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.info("분석 결과가 없습니다.")
+        with col1:
+            chg_cols = ["Chg1", "Chg2", "Chg3"]
+            bar_colors = [
+                "rgb(245,130,32)",
+                "rgb(4,59,114)",
+                "rgb(0,169,206)"
+            ]
 
-    # 각 지표별 상태 표시
-    st.markdown("---")
-    st.subheader("(2) 지표별 현재 상태")
+            x_vals = transposed["항목"].tolist()
+            y1 = transposed[chg_cols[0]].tolist()
+            y2 = transposed[chg_cols[1]].tolist()
+            y3 = transposed[chg_cols[2]].tolist()
 
-    indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
-                       'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
+            chg_labels = list(transposed.columns[1:4])
 
-    indicator_status = {}
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y1,
+                name=chg_labels[0],
+                marker_color=bar_colors[0]
+            ))
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y2,
+                name=chg_labels[1],
+                marker_color=bar_colors[1]
+            ))
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y3,
+                name=chg_labels[2],
+                marker_color=bar_colors[2]
+            ))
 
-    for cfg_key, trades_df in selected_detail_results.items():
-        if len(trades_df) == 0:
-            continue
+            fig.update_layout(
+                barmode='group',
+                xaxis_title="항목",
+                yaxis_title="변화량",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend_title="날짜"
+            )
 
-        col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
+            st.subheader("Change")
+            st.plotly_chart(fig, use_container_width=True)
 
-        if col not in indicator_status:
-            indicator_status[col] = {
-                'cases': [],
-                'order': indicator_order.index(col) if col in indicator_order else 999
+        ism_items = ["ISM Man. PMI", "New Orders", "Production", "Employment", "Supplier Deliveries", "Inventories"]
+
+        try:
+            base_df = raw_df.copy()
+        except NameError:
+            base_df = None
+
+        if base_df is not None:
+            date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
+            if len(date_col_candidates) > 0:
+                date_col = date_col_candidates[0]
+            else:
+                date_col = base_df.columns[0]
+
+            base_df[date_col] = pd.to_datetime(base_df[date_col])
+
+            min_date = base_df[date_col].min()
+            max_date = base_df[date_col].max()
+            default_start = pd.to_datetime("2023-01-01")
+            default_start = max(default_start, min_date)
+
+            with col2:
+                st.subheader("Time Series")
+
+                col_start, col_end = st.columns(2)
+
+                with col_start:
+                    start_date_input = st.date_input(
+                        "시작일",
+                        value=default_start.date(),
+                        min_value=min_date.date(),
+                        max_value=max_date.date(),
+                        key="ism_start_date"
+                    )
+
+                with col_end:
+                    end_date_input = st.date_input(
+                        "종료일",
+                        value=max_date.date(),
+                        min_value=min_date.date(),
+                        max_value=max_date.date(),
+                        key="ism_end_date"
+                    )
+
+                start_date = pd.to_datetime(start_date_input)
+                end_date = pd.to_datetime(end_date_input)
+
+                if start_date > end_date:
+                    st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
+                    end_date = start_date
+
+                mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
+                plot_df = base_df.loc[mask, [date_col] + [col for col in ism_items if col in base_df.columns]].copy()
+
+                ism_fig = go.Figure()
+                ism_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c"]
+
+                for i, col in enumerate(ism_items):
+                    if col in plot_df.columns:
+                        ism_fig.add_trace(
+                            go.Scatter(
+                                x=plot_df[date_col],
+                                y=plot_df[col],
+                                mode="lines+markers",
+                                name=col,
+                                line=dict(color=ism_colors[i % len(ism_colors)])
+                            )
+                        )
+
+                ism_fig.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="수치",
+                    legend_title="항목",
+                    margin=dict(l=20, r=20, t=40, b=40)
+                )
+
+                st.plotly_chart(ism_fig, use_container_width=True)
+
+    with subtab2:
+        st.header("US ISM Srv. PMI")
+
+        # 새로고침 버튼
+        col_btn, col_info = st.columns([10, 1])
+        with col_btn:
+            if st.button("새로고침(30초 이내)", key="refresh_srv", help="최신 데이터를 즉시 불러옵니다"):
+                load_ism_srv_data.clear()
+                st.success("데이터를 새로 불러오는 중...")
+                st.rerun()
+            st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+
+        # 캐싱된 함수 호출
+        raw_df = load_ism_srv_data()
+
+        # 데이터의 최신 날짜 표시
+        if len(raw_df) > 0:
+            latest_date = raw_df['date'].max()
+            st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+
+        # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+        n_show = 6
+        latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+
+        df_for_disp = raw_df.copy()
+        df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+        df_for_disp = df_for_disp.reset_index(drop=True)
+        df_for_disp_disp = df_for_disp.drop(columns=['date'])
+
+        original_columns = list(df_for_disp_disp.columns)
+
+        transposed = df_for_disp_disp.T
+        transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        transposed.index.name = None
+        transposed.reset_index(inplace=True)
+        transposed.rename(columns={'index': '항목'}, inplace=True)
+
+        delta_cols = []
+        for i in range(1, n_show):
+            chg_col = f'Chg{i}'
+            delta_vals = transposed.iloc[:, i] - transposed.iloc[:, i + 1]
+            delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
+            delta_cols.append((chg_col, delta_vals))
+            transposed[chg_col] = delta_vals
+
+        date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        chg_cols = [f'Chg{i}' for i in range(1, n_show)]
+        transposed = transposed[['항목'] + date_cols + chg_cols]
+
+        transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+        transposed = transposed.sort_values('항목').reset_index(drop=True)
+
+        st.subheader("미국 ISM 서비스업 PMI")
+
+        gb = GridOptionsBuilder.from_dataframe(transposed)
+        gb.configure_default_column(resizable=True, filter=True, sortable=True)
+
+        for col in date_cols + chg_cols:
+            gb.configure_column(col, cellStyle={"textAlign": "center"})
+
+
+        def get_row_style_js():
+            return JsCode("""
+            function(params) {
+                if (params.node.rowIndex === 0) {
+                    return {
+                        'backgroundColor': '#1565c0',
+                        'color': 'white',
+                        'fontWeight': 'bold'
+                    }
+                } else {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '20px'
+                    }
+                }
             }
+            """)
 
-        latest_signal_for_case = None
 
-        for _, trade in trades_df.iterrows():
-            signal_date = pd.to_datetime(trade['시그널발생일'])
-            entry_date = pd.to_datetime(trade['트레이딩진입일'])
-            end_date = pd.to_datetime(trade['트레이딩종료일'])
-            perf = trade['성과']
-            trading_days = trade['트레이딩기간']
-            entry_price = trade['트레이딩진입일가격']
-            signal_slope = trade['시그널기울기']
-            extension_flag = trade.get('연장여부', 'N')
-            extension_reason = trade.get('연장사유', '')
-            extension_dates_str = trade.get('연장발생일', '')
+        indent_js = JsCode("""
+        function(params) {
+            if (params.node.rowIndex === 0) {
+                return params.value;
+            } else {
+                return '\\u00A0\\u00A0' + params.value;
+            }
+        }
+        """)
 
-            if latest_signal_for_case is None or signal_date > pd.to_datetime(latest_signal_for_case['signal_date']):
-                current_price = None
-                for ts_cfg_key, ts_df in selected_timeseries_results.items():
-                    ts_col, _, _, _, _, _, _, _ = ts_cfg_key
-                    if ts_col == col:
-                        date_col = ts_df.columns[0]
-                        latest_data = ts_df[ts_df[date_col] <= today]
-                        if len(latest_data) > 0:
-                            current_price = latest_data.iloc[-1]['value']
-                            break
+        gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_grid_options(getRowStyle=get_row_style_js())
 
-                expected_end_date = entry_date + pd.Timedelta(days=tp)
-                is_completed = expected_end_date < today
+        AgGrid(
+            transposed,
+            gridOptions=gb.build(),
+            height=400,
+            width='100%',
+            fit_columns_on_grid_load=True,
+            theme="streamlit",
+            allow_unsafe_jscode=True
+        )
 
-                latest_signal_for_case = {
-                    'signal_date': signal_date,
-                    'entry_date': entry_date,
-                    'end_date': end_date,
-                    'expected_end_date': expected_end_date,
-                    'trading_period': tp,
-                    'trading_days': trading_days,
-                    'entry_price': entry_price,
-                    'current_price': current_price,
-                    'signal_slope': signal_slope,
-                    'perf_metric': perf_m,
-                    'perf': perf,
-                    'is_completed': is_completed,
-                    'extension_flag': extension_flag,
-                    'extension_reason': extension_reason,
-                    'extension_dates_str': extension_dates_str,
-                    'cfg_key': cfg_key
+        col1, col2 = st.columns(2)
+
+        with col1:
+            chg_cols = ["Chg1", "Chg2", "Chg3"]
+            bar_colors = [
+                "rgb(245,130,32)",
+                "rgb(4,59,114)",
+                "rgb(0,169,206)"
+            ]
+
+            x_vals = transposed["항목"].tolist()
+            y1 = transposed[chg_cols[0]].tolist()
+            y2 = transposed[chg_cols[1]].tolist()
+            y3 = transposed[chg_cols[2]].tolist()
+
+            chg_labels = list(transposed.columns[1:4])
+
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y1,
+                name=chg_labels[0],
+                marker_color=bar_colors[0]
+            ))
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y2,
+                name=chg_labels[1],
+                marker_color=bar_colors[1]
+            ))
+            fig.add_trace(go.Bar(
+                x=x_vals,
+                y=y3,
+                name=chg_labels[2],
+                marker_color=bar_colors[2]
+            ))
+
+            fig.update_layout(
+                barmode='group',
+                xaxis_title="항목",
+                yaxis_title="변화량",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend_title="날짜"
+            )
+
+            st.subheader("Change")
+            st.plotly_chart(fig, use_container_width=True)
+
+        srv_items = ["ISM Srv. PMI", "Business Activity", "New Orders", "Employment", "Supplier Deliveries"]
+
+        try:
+            base_df = raw_df.copy()
+        except NameError:
+            base_df = None
+
+        if base_df is not None:
+            date_col_candidates = [col for col in base_df.columns if 'date' in col.lower() or '날짜' in col]
+            if len(date_col_candidates) > 0:
+                date_col = date_col_candidates[0]
+            else:
+                date_col = base_df.columns[0]
+
+            base_df[date_col] = pd.to_datetime(base_df[date_col])
+
+            min_date = base_df[date_col].min()
+            max_date = base_df[date_col].max()
+            default_start = pd.to_datetime("2023-01-01")
+            default_start = max(default_start, min_date)
+
+            with col2:
+                st.subheader("Time Series")
+
+                col_start, col_end = st.columns(2)
+
+                with col_start:
+                    start_date_input = st.date_input(
+                        "시작일",
+                        value=default_start.date(),
+                        min_value=min_date.date(),
+                        max_value=max_date.date(),
+                        key="srv_start_date"
+                    )
+
+                with col_end:
+                    end_date_input = st.date_input(
+                        "종료일",
+                        value=max_date.date(),
+                        min_value=min_date.date(),
+                        max_value=max_date.date(),
+                        key="srv_end_date"
+                    )
+
+                start_date = pd.to_datetime(start_date_input)
+                end_date = pd.to_datetime(end_date_input)
+
+                if start_date > end_date:
+                    st.warning("⚠️ 시작일이 종료일보다 늦습니다. 시작일을 종료일 이전으로 설정해주세요.")
+                    end_date = start_date
+
+                mask = (base_df[date_col] >= start_date) & (base_df[date_col] <= end_date)
+                plot_df = base_df.loc[mask, [date_col] + [col for col in srv_items if col in base_df.columns]].copy()
+
+                srv_fig = go.Figure()
+                srv_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900"]
+
+                for i, col in enumerate(srv_items):
+                    if col in plot_df.columns:
+                        srv_fig.add_trace(
+                            go.Scatter(
+                                x=plot_df[date_col],
+                                y=plot_df[col],
+                                mode="lines+markers",
+                                name=col,
+                                line=dict(color=srv_colors[i % len(srv_colors)])
+                            )
+                        )
+
+                srv_fig.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="수치",
+                    legend_title="항목",
+                    margin=dict(l=20, r=20, t=40, b=40)
+                )
+
+                st.plotly_chart(srv_fig, use_container_width=True)
+
+    with subtab3:
+        st.header("US Non Farm Payroll(sa)")
+
+        # 새로고침 버튼
+        col_btn, col_info = st.columns([10, 1])
+        with col_btn:
+            if st.button("새로고침(30초 이내)", key="refresh_nfp", help="최신 데이터를 즉시 불러옵니다"):
+                load_us_nfp_data.clear()
+                st.success("데이터를 새로 불러오는 중...")
+                st.rerun()
+            st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+
+        # 캐싱된 함수 호출
+        raw_df = load_us_nfp_data()
+
+        # 데이터의 최신 날짜 표시
+        if len(raw_df) > 0:
+            latest_date = raw_df['date'].max()
+            st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+
+        # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+        n_show = 6
+        latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+
+        df_for_disp = raw_df.copy()
+        df_for_disp = df_for_disp.drop(columns=['Unnamed: 0'])
+        df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+        df_for_disp = df_for_disp.reset_index(drop=True)
+        df_for_disp_disp = df_for_disp.drop(columns=['date'])
+
+        original_columns = list(df_for_disp_disp.columns)
+        #original_columns = ['Non Farm Payroll(sa)']
+
+        transposed = df_for_disp_disp.T
+        transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        transposed.index.name = None
+        transposed.reset_index(inplace=True)
+        transposed.rename(columns={'index': '항목'}, inplace=True)
+
+        delta_cols = []
+        for i in range(1, n_show):
+            chg_col = f'Chg{i}'
+            delta_vals = transposed.iloc[:, i] - transposed.iloc[:, i + 1]
+            delta_vals = delta_vals.apply(lambda x: f"{x:.1f}" if pd.notna(x) else "")
+            delta_cols.append((chg_col, delta_vals))
+            transposed[chg_col] = delta_vals
+
+        date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        chg_cols = [f'Chg{i}' for i in range(1, n_show)]
+        transposed = transposed[['항목'] + date_cols + chg_cols]
+
+        transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+        transposed = transposed.sort_values('항목').reset_index(drop=True)
+        transposed.loc[transposed["항목"].isin(["Chg. 1st", "Chg. 2nd", "Chg. 3rd"]), ["Chg1", "Chg2", "Chg3", "Chg4", "Chg5"]] = np.nan
+
+        st.subheader("미국 비농업고용(sa)")
+
+        gb = GridOptionsBuilder.from_dataframe(transposed)
+        gb.configure_default_column(resizable=True, filter=True, sortable=True)
+
+        for col in date_cols + chg_cols:
+            gb.configure_column(col, cellStyle={"textAlign": "center"})
+
+
+        def get_row_style_js2():
+            return JsCode("""
+            function(params) {
+                if (params.node.rowIndex === 0) {
+                    return {
+                        'backgroundColor': '#1565c0',
+                        'color': 'white',
+                        'fontWeight': 'bold'
+                    }
+                } else if (params.node.rowIndex >= 1 && params.node.rowIndex <= 3) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 4 && params.node.rowIndex <= 5) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#808080',
+                        'color': 'white',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 6 && params.node.rowIndex <= 7) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'white',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 8 && params.node.rowIndex <= 21) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#808080',
+                        'color': 'white',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 22 && params.node.rowIndex <= 24) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'white',
+                        'paddingLeft': '20px'
+                    }
+                } else if (params.node.rowIndex >= 25 && params.node.rowIndex <= 26) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#808080',
+                        'color': 'white',
+                        'paddingLeft': '40px'
+                    }
+                } else if (params.node.rowIndex >= 27 && params.node.rowIndex <= 28) {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#BFBFBF',
+                        'color': 'white',
+                        'paddingLeft': '40px'
+                    }
+                } else {
+                    return {
+                        'fontFamily': 'inherit',
+                        'backgroundColor': '#808080',
+                        'color': 'white',
+                        'paddingLeft': '40px'
+                    }
+                }
+            }
+            """)
+
+
+        indent_js = JsCode("""
+        function(params) {
+            if (params.node.rowIndex === 0) {
+                return params.value;
+            } else {
+                return '\\u00A0\\u00A0' + params.value;
+            }
+        }
+        """)
+
+        gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_grid_options(getRowStyle=get_row_style_js2())
+
+        AgGrid(
+            transposed,
+            gridOptions=gb.build(),
+            height=400,
+            width='100%',
+            fit_columns_on_grid_load=True,
+            theme="streamlit",
+            allow_unsafe_jscode=True
+        )
+        ##########################
+        # 여기부터 계속하기
+        ##########################
+        # PMI 보고 차트 코드 참고하기
+
+    with subtab4:
+        st.header("US CPI")
+
+    with subtab5:
+        st.header("US PPI")
+
+with tab2:
+    st.header("Signal Model")
+
+    subtab1, subtab2 = st.tabs(["FDS", "TransformerFX"])
+
+    with subtab1:
+        st.header("Fractal Dimension Trading Analysis")
+
+        # 새로고침 버튼
+        col_btn, col_info = st.columns([10, 1])
+        with col_btn:
+            if st.button("새로고침(3분 이내)", key="refresh_fds", help="최신 데이터를 즉시 불러옵니다"):
+                load_and_analyze_data.clear()
+                run_analysis.clear()
+                st.success("데이터를 새로 불러오는 중...")
+                st.rerun()
+            st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+
+        # 메인 실행
+        with st.spinner("데이터를 로딩하고 분석을 실행하는 중..."):
+            raw_df = load_and_analyze_data()
+            selected_summary_df, selected_timeseries_results, selected_detail_results = run_analysis(raw_df)
+
+        # 데이터의 최신 날짜 표시
+        if len(raw_df) > 0:
+            latest_date = raw_df['date'].max()
+            st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+
+        # 요약 테이블 표시
+        today = pd.Timestamp.today().normalize()
+        today_str = today.strftime('%Y-%m-%d')
+
+        case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
+        st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
+
+        if len(selected_summary_df) > 0:
+            display_df = selected_summary_df.copy()
+            display_df = display_df.rename(columns={
+                'analysis_column': '분석지표',
+                'analysis_window': '분석(FD계산)일',
+                'slope_threshold': '직전기울기요건',
+                'trading_period': '트레이딩기간',
+                'fd_level_threshold': 'FD기준',
+                'fd_level_lookback': 'FD Lookback',
+                'slope_metric': 'Slope Metric',
+                'perf_metric': 'Perf Metric',
+                'trade_count': 'Signal발생횟수',
+                'hit_ratio': 'Hit Ratio',
+                'avg_perf': '평균성과'
+            })
+
+            display_df = display_df.drop(columns=['Slope Metric', 'Perf Metric', 'FD Lookback'], errors='ignore')
+
+            if 'Hit Ratio' in display_df.columns:
+                display_df['Hit Ratio'] = display_df['Hit Ratio'].apply(
+                    lambda x: f"{x * 100:.1f}%" if pd.notna(x) else ""
+                )
+            if '평균성과' in display_df.columns:
+                display_df['평균성과'] = display_df['평균성과'].apply(
+                    lambda x: f"{x:.4f}" if pd.notna(x) else ""
+                )
+            if 'FD기준' in display_df.columns:
+                display_df['FD기준'] = display_df['FD기준'].apply(
+                    lambda x: f"{x:.2f}" if pd.notna(x) else ""
+                )
+
+            gb = GridOptionsBuilder.from_dataframe(display_df)
+            gb.configure_default_column(
+                resizable=True,
+                sortable=True,
+                filterable=True
+            )
+
+            for col in display_df.columns:
+                gb.configure_column(
+                    col,
+                    cellStyle={"textAlign": "center", "display": "flex", "justifyContent": "center",
+                               "alignItems": "center"},
+                    headerClass="ag-center-header"
+                )
+
+            gb.configure_pagination(
+                enabled=True,
+                paginationAutoPageSize=False,
+                paginationPageSize=20
+            )
+            gb.configure_selection('single')
+            grid_options = gb.build()
+
+            st.markdown("""
+            <style>
+            .ag-cell {
+                text-align: center !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .ag-header-cell,
+            .ag-center-header {
+                text-align: center !important;
+            }
+            .ag-header-cell-label {
+                justify-content: center !important;
+                width: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+            .ag-header-cell-text {
+                margin: 0 auto !important;
+                text-align: center !important;
+            }
+            div[class*="ag-header-cell"] {
+                text-align: center !important;
+            }
+            div[class*="ag-header-cell-label"] {
+                justify-content: center !important;
+                text-align: center !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+            grid_response = AgGrid(
+                display_df,
+                gridOptions=grid_options,
+                height=400,
+                width='100%',
+                theme='streamlit',
+                allow_unsafe_jscode=True
+            )
+
+            st.markdown("""
+            <script>
+            function centerHeaders() {
+                var headers = document.querySelectorAll('.ag-header-cell-label');
+                headers.forEach(function(header) {
+                    header.style.justifyContent = 'center';
+                    header.style.textAlign = 'center';
+                    header.style.display = 'flex';
+                    header.style.alignItems = 'center';
+                });
+                var headerTexts = document.querySelectorAll('.ag-header-cell-text');
+                headerTexts.forEach(function(text) {
+                    text.style.margin = '0 auto';
+                    text.style.textAlign = 'center';
+                });
+            }
+            setTimeout(centerHeaders, 500);
+            setTimeout(centerHeaders, 1000);
+            setTimeout(centerHeaders, 2000);
+            </script>
+            """, unsafe_allow_html=True)
+
+            st.markdown("""
+            <div style="font-size: 0.85em; color: #666;">
+            지표에 따라 기울기요건과 평균성과는 %와 Profit으로 표기되었습니다.(예. 환율은 %, 금리는 Profit)<br>    
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("분석 결과가 없습니다.")
+
+        # 각 지표별 상태 표시
+        st.markdown("---")
+        st.subheader("(2) 지표별 현재 상태")
+
+        indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
+                           'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
+
+        indicator_status = {}
+
+        for cfg_key, trades_df in selected_detail_results.items():
+            if len(trades_df) == 0:
+                continue
+
+            col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
+
+            if col not in indicator_status:
+                indicator_status[col] = {
+                    'cases': [],
+                    'order': indicator_order.index(col) if col in indicator_order else 999
                 }
 
-        if latest_signal_for_case is not None:
-            indicator_status[col]['cases'].append(latest_signal_for_case)
+            latest_signal_for_case = None
 
-    sorted_indicators = sorted(indicator_status.items(), key=lambda x: (x[1]['order'], x[0]))
+            for _, trade in trades_df.iterrows():
+                signal_date = pd.to_datetime(trade['시그널발생일'])
+                entry_date = pd.to_datetime(trade['트레이딩진입일'])
+                end_date = pd.to_datetime(trade['트레이딩종료일'])
+                perf = trade['성과']
+                trading_days = trade['트레이딩기간']
+                entry_price = trade['트레이딩진입일가격']
+                signal_slope = trade['시그널기울기']
+                extension_flag = trade.get('연장여부', 'N')
+                extension_reason = trade.get('연장사유', '')
+                extension_dates_str = trade.get('연장발생일', '')
 
-    for indicator, status in sorted_indicators:
-        if len(status['cases']) == 0:
-            st.markdown(f"**{indicator}는 현재 Signal 발생 / Trading 중이 아닙니다.**")
-        else:
-            cases = status['cases']
-            for case_idx, ls in enumerate(cases, 1):
-                if len(cases) > 1:
-                    indicator_name = f"{indicator}({case_idx})"
-                else:
-                    indicator_name = indicator
+                if latest_signal_for_case is None or signal_date > pd.to_datetime(latest_signal_for_case['signal_date']):
+                    current_price = None
+                    for ts_cfg_key, ts_df in selected_timeseries_results.items():
+                        ts_col, _, _, _, _, _, _, _ = ts_cfg_key
+                        if ts_col == col:
+                            date_col = ts_df.columns[0]
+                            latest_data = ts_df[ts_df[date_col] <= today]
+                            if len(latest_data) > 0:
+                                current_price = latest_data.iloc[-1]['value']
+                                break
 
-                signal_date_str = ls['signal_date'].strftime('%Y-%m-%d')
+                    expected_end_date = entry_date + pd.Timedelta(days=tp)
+                    is_completed = expected_end_date < today
 
-                if ls['is_completed']:
-                    expected_end_date_str = ls['expected_end_date'].strftime('%Y-%m-%d')
-                    trading_period = ls['trading_period']
-                    perf = ls['perf']
+                    latest_signal_for_case = {
+                        'signal_date': signal_date,
+                        'entry_date': entry_date,
+                        'end_date': end_date,
+                        'expected_end_date': expected_end_date,
+                        'trading_period': tp,
+                        'trading_days': trading_days,
+                        'entry_price': entry_price,
+                        'current_price': current_price,
+                        'signal_slope': signal_slope,
+                        'perf_metric': perf_m,
+                        'perf': perf,
+                        'is_completed': is_completed,
+                        'extension_flag': extension_flag,
+                        'extension_reason': extension_reason,
+                        'extension_dates_str': extension_dates_str,
+                        'cfg_key': cfg_key
+                    }
 
-                    if pd.notna(perf):
-                        if ls['perf_metric'] == 'rate':
-                            perf_str = f"{perf * 100:.1f}%"
-                        else:
-                            perf_str = f"{perf * 100:.2f}bp"
+            if latest_signal_for_case is not None:
+                indicator_status[col]['cases'].append(latest_signal_for_case)
+
+        sorted_indicators = sorted(indicator_status.items(), key=lambda x: (x[1]['order'], x[0]))
+
+        for indicator, status in sorted_indicators:
+            if len(status['cases']) == 0:
+                st.markdown(f"**{indicator}는 현재 Signal 발생 / Trading 중이 아닙니다.**")
+            else:
+                cases = status['cases']
+                for case_idx, ls in enumerate(cases, 1):
+                    if len(cases) > 1:
+                        indicator_name = f"{indicator}({case_idx})"
                     else:
-                        perf_str = "N/A"
+                        indicator_name = indicator
 
-                    st.markdown(
-                        f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, {expected_end_date_str}일에 {trading_period}일의 trading이 종료되었습니다. 수익은 {perf_str}입니다.**")
-                else:
-                    trading_period = ls['trading_period']
-                    elapsed_days = (today - ls['entry_date']).days + 1
-                    is_extended = elapsed_days > trading_period
-                    extension_note = ""
-                    current_target_end_date = ls['expected_end_date']
-                    current_target_period = trading_period
+                    signal_date_str = ls['signal_date'].strftime('%Y-%m-%d')
 
-                    if is_extended:
-                        if ls.get('extension_dates_str', '') and ls['extension_dates_str'].strip():
-                            extension_dates_list = [d.strip() for d in ls['extension_dates_str'].split(',')]
-                            extension_dates_parsed = []
-                            for ext_date_str in extension_dates_list:
-                                try:
-                                    ext_date = pd.to_datetime(ext_date_str)
-                                    extension_dates_parsed.append(ext_date)
-                                except:
-                                    continue
+                    if ls['is_completed']:
+                        expected_end_date_str = ls['expected_end_date'].strftime('%Y-%m-%d')
+                        trading_period = ls['trading_period']
+                        perf = ls['perf']
 
-                            if extension_dates_parsed:
-                                last_extension_date = max(extension_dates_parsed)
-                                current_target_end_date = last_extension_date + pd.Timedelta(days=trading_period)
-                                days_since_last_extension = (today - last_extension_date).days + 1
-                                current_target_period = days_since_last_extension
-                                extension_dates_display = ls['extension_dates_str']
+                        if pd.notna(perf):
+                            if ls['perf_metric'] == 'rate':
+                                perf_str = f"{perf * 100:.1f}%"
+                            else:
+                                perf_str = f"{perf * 100:.2f}bp"
+                        else:
+                            perf_str = "N/A"
 
-                                if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
-                                    extension_note = f", 시그널 연장 발생 {extension_dates_display} ({ls['extension_reason']})"
+                        st.markdown(
+                            f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, {expected_end_date_str}일에 {trading_period}일의 trading이 종료되었습니다. 수익은 {perf_str}입니다.**")
+                    else:
+                        trading_period = ls['trading_period']
+                        elapsed_days = (today - ls['entry_date']).days + 1
+                        is_extended = elapsed_days > trading_period
+                        extension_note = ""
+                        current_target_end_date = ls['expected_end_date']
+                        current_target_period = trading_period
+
+                        if is_extended:
+                            if ls.get('extension_dates_str', '') and ls['extension_dates_str'].strip():
+                                extension_dates_list = [d.strip() for d in ls['extension_dates_str'].split(',')]
+                                extension_dates_parsed = []
+                                for ext_date_str in extension_dates_list:
+                                    try:
+                                        ext_date = pd.to_datetime(ext_date_str)
+                                        extension_dates_parsed.append(ext_date)
+                                    except:
+                                        continue
+
+                                if extension_dates_parsed:
+                                    last_extension_date = max(extension_dates_parsed)
+                                    current_target_end_date = last_extension_date + pd.Timedelta(days=trading_period)
+                                    days_since_last_extension = (today - last_extension_date).days + 1
+                                    current_target_period = days_since_last_extension
+                                    extension_dates_display = ls['extension_dates_str']
+
+                                    if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
+                                        extension_note = f", 시그널 연장 발생 {extension_dates_display} ({ls['extension_reason']})"
+                                    else:
+                                        extension_note = f", 시그널 연장 발생 {extension_dates_display}"
                                 else:
-                                    extension_note = f", 시그널 연장 발생 {extension_dates_display}"
+                                    extension_start_date = ls['expected_end_date']
+                                    extension_start_date_str = extension_start_date.strftime('%Y-%m-%d')
+                                    extended_days = elapsed_days - trading_period
+
+                                    if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
+                                        extension_note = f", 시그널 연장 발생 {extension_start_date_str}부터 {extended_days}일 연장됨 ({ls['extension_reason']})"
+                                    else:
+                                        extension_note = f", 시그널 연장 발생 {extension_start_date_str}부터 {extended_days}일 연장됨"
                             else:
                                 extension_start_date = ls['expected_end_date']
                                 extension_start_date_str = extension_start_date.strftime('%Y-%m-%d')
                                 extended_days = elapsed_days - trading_period
+                                current_target_end_date = extension_start_date + pd.Timedelta(days=trading_period)
+                                days_since_extension = (today - extension_start_date).days + 1
+                                current_target_period = days_since_extension
 
                                 if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
-                                    extension_note = f", 시그널 연장 발생 {extension_start_date_str}부터 {extended_days}일 연장됨 ({ls['extension_reason']})"
+                                    extension_note = f", 시그널 연장 발생 {extension_start_date_str} ({ls['extension_reason']})"
                                 else:
-                                    extension_note = f", 시그널 연장 발생 {extension_start_date_str}부터 {extended_days}일 연장됨"
-                        else:
-                            extension_start_date = ls['expected_end_date']
-                            extension_start_date_str = extension_start_date.strftime('%Y-%m-%d')
-                            extended_days = elapsed_days - trading_period
-                            current_target_end_date = extension_start_date + pd.Timedelta(days=trading_period)
-                            days_since_extension = (today - extension_start_date).days + 1
-                            current_target_period = days_since_extension
+                                    extension_note = f", 시그널 연장 발생 {extension_start_date_str}"
 
-                            if ls['extension_flag'] == 'Y' and ls.get('extension_reason', ''):
-                                extension_note = f", 시그널 연장 발생 {extension_start_date_str} ({ls['extension_reason']})"
+                        current_perf = None
+                        if ls['current_price'] is not None and pd.notna(ls['entry_price']) and ls['entry_price'] != 0:
+                            if ls['perf_metric'] == 'rate':
+                                current_perf = (ls['current_price'] - ls['entry_price']) / ls['entry_price']
+                                if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
+                                    current_perf = -current_perf
+                                perf_str = f"{current_perf * 100:.1f}%"
                             else:
-                                extension_note = f", 시그널 연장 발생 {extension_start_date_str}"
-
-                    current_perf = None
-                    if ls['current_price'] is not None and pd.notna(ls['entry_price']) and ls['entry_price'] != 0:
-                        if ls['perf_metric'] == 'rate':
-                            current_perf = (ls['current_price'] - ls['entry_price']) / ls['entry_price']
-                            if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
-                                current_perf = -current_perf
-                            perf_str = f"{current_perf * 100:.1f}%"
+                                current_perf = ls['current_price'] - ls['entry_price']
+                                if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
+                                    current_perf = -current_perf
+                                perf_str = f"{current_perf * 100:.2f}bp"
                         else:
-                            current_perf = ls['current_price'] - ls['entry_price']
-                            if pd.notna(ls['signal_slope']) and ls['signal_slope'] > 0:
-                                current_perf = -current_perf
-                            perf_str = f"{current_perf * 100:.2f}bp"
-                    else:
-                        perf_str = "N/A"
+                            perf_str = "N/A"
 
-                    if is_extended:
-                        st.markdown(
-                            f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {current_target_period}일 중 {elapsed_days}일이 경과했습니다{extension_note}. 현재 수익은 {perf_str} 입니다.**")
-                    else:
-                        st.markdown(
-                            f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다. 현재 수익은 {perf_str} 입니다.**")
+                        if is_extended:
+                            st.markdown(
+                                f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {current_target_period}일 중 {elapsed_days}일이 경과했습니다{extension_note}. 현재 수익은 {perf_str} 입니다.**")
+                        else:
+                            st.markdown(
+                                f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다. 현재 수익은 {perf_str} 입니다.**")
 
-    # 차트 표시
-    st.markdown("---")
-    st.subheader("(3) 시계열 차트")
-    st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
+        # 차트 표시
+        st.markdown("---")
+        st.subheader("(3) 시계열 차트")
+        st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
 
-    indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
-                       'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
+        indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
+                           'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
 
-    indicator_groups = {}
-    for cfg_key, ts_df in selected_timeseries_results.items():
-        col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
-        if col not in indicator_groups:
-            indicator_groups[col] = []
-        indicator_groups[col].append((cfg_key, ts_df))
-
-    max_cols = max([len(cases) for cases in indicator_groups.values()]) if indicator_groups else 1
-
-    for indicator in indicator_order:
-        if indicator not in indicator_groups:
-            continue
-
-        cases = indicator_groups[indicator]
-        if len(cases) == 0:
-            continue
-
-        st.markdown(indicator)
-        cols = st.columns(max_cols)
-
-        for idx, (cfg_key, ts_df) in enumerate(cases):
+        indicator_groups = {}
+        for cfg_key, ts_df in selected_timeseries_results.items():
             col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
+            if col not in indicator_groups:
+                indicator_groups[col] = []
+            indicator_groups[col].append((cfg_key, ts_df))
 
-            with cols[idx]:
-                title = f"aw={aw}, st={st_val}, tp={tp}, fd_th={fd_th}, fd_lb={fd_lb}"
-                st.markdown(f"**{title}**")
+        max_cols = max([len(cases) for cases in indicator_groups.values()]) if indicator_groups else 1
 
-                ts = ts_df.copy()
-                date_col = ts.columns[0]
+        for indicator in indicator_order:
+            if indicator not in indicator_groups:
+                continue
 
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=ts[date_col],
-                    y=ts['value'],
-                    mode='lines',
-                    name='Value',
-                    line=dict(width=2, color='rgb(245,130,32)'),
-                    showlegend=False
-                ))
+            cases = indicator_groups[indicator]
+            if len(cases) == 0:
+                continue
 
-                signal_mask = ts['signal여부'] == 1
-                if signal_mask.any():
-                    signal_data = ts.loc[signal_mask]
+            st.markdown(indicator)
+            cols = st.columns(max_cols)
 
-                    negative_mask = signal_data['signal_slope_sign'] == -1
-                    if negative_mask.any():
-                        fig.add_trace(go.Scatter(
-                            x=signal_data.loc[negative_mask, date_col],
-                            y=signal_data.loc[negative_mask, 'value'],
-                            mode='markers',
-                            name='Signal (-)',
-                            marker=dict(size=8, color='rgb(4,59,114)', symbol='circle'),
-                            showlegend=False
-                        ))
+            for idx, (cfg_key, ts_df) in enumerate(cases):
+                col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
 
-                    positive_mask = signal_data['signal_slope_sign'] == 1
-                    if positive_mask.any():
-                        fig.add_trace(go.Scatter(
-                            x=signal_data.loc[positive_mask, date_col],
-                            y=signal_data.loc[positive_mask, 'value'],
-                            mode='markers',
-                            name='Signal (+)',
-                            marker=dict(size=8, color='rgb(0,169,206)', symbol='circle'),
-                            showlegend=False
-                        ))
+                with cols[idx]:
+                    title = f"aw={aw}, st={st_val}, tp={tp}, fd_th={fd_th}, fd_lb={fd_lb}"
+                    st.markdown(f"**{title}**")
 
-                fig.update_layout(
-                    xaxis_title='Date',
-                    yaxis_title='Value',
-                    height=350,
-                    hovermode='x unified',
-                    font=dict(size=10),
-                    margin=dict(l=40, r=20, t=20, b=40)
-                )
+                    ts = ts_df.copy()
+                    date_col = ts.columns[0]
 
-                st.plotly_chart(fig, use_container_width=True)
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        x=ts[date_col],
+                        y=ts['value'],
+                        mode='lines',
+                        name='Value',
+                        line=dict(width=2, color='rgb(245,130,32)'),
+                        showlegend=False
+                    ))
 
-        for idx in range(len(cases), max_cols):
-            with cols[idx]:
-                st.empty()
-                
+                    signal_mask = ts['signal여부'] == 1
+                    if signal_mask.any():
+                        signal_data = ts.loc[signal_mask]
 
+                        negative_mask = signal_data['signal_slope_sign'] == -1
+                        if negative_mask.any():
+                            fig.add_trace(go.Scatter(
+                                x=signal_data.loc[negative_mask, date_col],
+                                y=signal_data.loc[negative_mask, 'value'],
+                                mode='markers',
+                                name='Signal (-)',
+                                marker=dict(size=8, color='rgb(4,59,114)', symbol='circle'),
+                                showlegend=False
+                            ))
+
+                        positive_mask = signal_data['signal_slope_sign'] == 1
+                        if positive_mask.any():
+                            fig.add_trace(go.Scatter(
+                                x=signal_data.loc[positive_mask, date_col],
+                                y=signal_data.loc[positive_mask, 'value'],
+                                mode='markers',
+                                name='Signal (+)',
+                                marker=dict(size=8, color='rgb(0,169,206)', symbol='circle'),
+                                showlegend=False
+                            ))
+
+                    fig.update_layout(
+                        xaxis_title='Date',
+                        yaxis_title='Value',
+                        height=350,
+                        hovermode='x unified',
+                        font=dict(size=10),
+                        margin=dict(l=40, r=20, t=20, b=40)
+                    )
+
+                    st.plotly_chart(fig, use_container_width=True)
+
+            for idx in range(len(cases), max_cols):
+                with cols[idx]:
+                    st.empty()
+
+    with subtab2:
+        st.header("Transformer FX Signal")
+        
