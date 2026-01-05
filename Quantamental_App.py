@@ -951,13 +951,12 @@ def run_analysis(raw_df):
 # 탭 생성
 tab1, tab2 = st.tabs(["US Macro", "Signal Model"])
 
-with tab1:
-    st.header("US Macro")
+with tab1:   
 
     subtab1, subtab2, subtab3, subtab4, subtab5 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI"])
 
     with subtab1:
-        st.header("US ISM Man. PMI")
+        st.subheader("US ISM Man. PMI")
 
         # 새로고침 버튼
         col_btn, col_info = st.columns([10, 1])
@@ -1186,7 +1185,8 @@ with tab1:
                 st.plotly_chart(ism_fig, use_container_width=True)
 
     with subtab2:
-        st.header("US ISM Srv. PMI")
+        
+        st.subheader("US ISM Srv. PMI")
 
         # 새로고침 버튼
         col_btn, col_info = st.columns([10, 1])
@@ -1415,7 +1415,8 @@ with tab1:
                 st.plotly_chart(srv_fig, use_container_width=True)
 
     with subtab3:
-        st.header("US Non Farm Payroll(sa)")
+        
+        st.subheader("US Non Farm Payroll(sa)")
 
         # 새로고침 버튼
         col_btn, col_info = st.columns([10, 1])
@@ -1574,18 +1575,20 @@ with tab1:
         # PMI 보고 차트 코드 참고하기
 
     with subtab4:
-        st.header("US CPI")
+        
+        st.subheader("US CPI")
 
     with subtab5:
-        st.header("US PPI")
+        
+        st.subheader("US PPI")
 
-with tab2:
-    st.header("Signal Model")
+with tab2:    
 
     subtab1, subtab2 = st.tabs(["FDS", "TransformerFX"])
 
     with subtab1:
-        st.header("Fractal Dimension Trading Analysis")
+        
+        st.subheader("Fractal Dimension Trading Analysis")
 
         # 새로고침 버튼
         col_btn, col_info = st.columns([10, 1])
@@ -2005,7 +2008,8 @@ with tab2:
                     st.empty()
 
     with subtab2:
-        st.header("Transformer FX Signal")
+        st.subheader("Transformer FX Signal")
         
+
 
 
