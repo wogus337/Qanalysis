@@ -1464,7 +1464,7 @@ with tab3:
     transposed = transposed.sort_values('항목').reset_index(drop=True)
     transposed.loc[transposed["항목"].isin(["Chg. 1st", "Chg. 2nd", "Chg. 3rd"]), ["Chg1", "Chg2", "Chg3", "Chg4", "Chg5"]] = np.nan
 
-    st.subheader("미국 ISM 서비스업 PMI")
+    st.subheader("미국 비농업고용(sa)")
 
     gb = GridOptionsBuilder.from_dataframe(transposed)
     gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1994,3 +1994,4 @@ with tab6:
             with cols[idx]:
                 st.empty()
                 
+
