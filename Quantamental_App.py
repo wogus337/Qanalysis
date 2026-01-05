@@ -23,6 +23,7 @@ from dataclasses import dataclass
 token = st.secrets["CEIC_token"]
 Ceic.set_token(token)
 
+
 def clean_unit(u):
     if u is None or pd.isna(u):
         return u
@@ -2006,4 +2007,5 @@ with tab2:
     with subtab2:
         st.header("Transformer FX Signal")
         
+
 
