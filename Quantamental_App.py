@@ -633,7 +633,7 @@ def load_us_nfp_data():
     codes_E = ['40868401',  # NFP. SA
                '532490047', '532490057', '532490067',  # NFP.Chg. 1st, 2nd, 3rd
                '40868501', '40882201',  # Private vs. Government
-               '40868601', '40872601',   # Goods vs. Service
+               '40868601', '40872601',  # Goods vs. Service
                '40868701', '40869401', '40869801', '40872901', '40873301', '40874801', '40875901',
                '40876001', '40876801', '40878101', '40879701', '40879901', '40880901', '40881801',  # Sector
                '40882301', '40882601', '40882901',  # Govt: FG vs. SG vs. LG
@@ -680,6 +680,93 @@ def load_us_nfp_data():
     df_E_tr['date'] = pd.to_datetime(df_E_tr['date'])
     df_E = pd.concat([df_oriE, df_E_tr], ignore_index=True)
     raw_df = df_E.copy()
+    raw_df = raw_df[raw_df['date'] >= '1992-01-01']
+
+    return raw_df
+
+
+@st.cache_data(ttl=604800)  # 1주일 (604800초)
+def load_us_cpi_data():
+    """US CPI 데이터를 로드합니다."""
+    codes_CPI = ['530032797', '530032887', '530032697', '530032787',  # CPI YOY, Core YOY, CPI MOM, Core MOM
+               '530032807', '530032817', '530032827', '530032837', '530032847', '530032857', '530032867', '530032877',
+               '530032777', '530032767', '530032757', '530032747', '530032737', '530032727', '530032717', '530032707']
+
+    df_CPI = Ceic.series(codes_CPI, start_date='2025-01-01').as_pandas()
+    meta_CPI = Ceic.series_metadata(codes_CPI).as_pandas()
+
+    meta_CPI["name"] = (
+        meta_CPI["name"]
+        .str.replace("Consumer Price Index: Urban: sa: YoY", "CPI(YoY)", regex=False)
+        .str.replace("CPI U: sa: YoY: All Items Less Food & Energy", "Core CPI(YoY)", regex=False)
+        .str.replace("Consumer Price Index: Urban: sa: MoM", "CPI(MoM)", regex=False)
+        .str.replace("CPI U: sa: MoM: All Items Less Food & Energy", "Core CPI(MoM)", regex=False)
+        .str.replace("CPI U: sa: ", "", regex=False)
+    )
+
+    df_CPI['id'] = df_CPI['id'].astype(str)
+    meta_CPI['id'] = meta_CPI['id'].astype(str)
+    df_pivot = df_CPI.pivot(index='date', columns='id', values='value')
+    id_to_unit = meta_CPI.set_index('id')['name']
+    df_pivot = df_pivot.rename(columns=lambda x: clean_unit(id_to_unit.get(x, x)))
+    df_CPI_tr = df_pivot.sort_index()
+    df_CPI_tr = df_CPI_tr.reset_index().rename(columns={'index': 'date'})
+    df_CPI_tr = df_CPI_tr[['date',
+                       'CPI(YoY)', 'Core CPI(YoY)',
+                       'YoY: Apparel', 'YoY: Transport', 'YoY: Medical Care', 'YoY: Recreation',
+                       'YoY: Education & Communication', 'YoY: Other Goods & Services',
+                       'CPI(MoM)', 'Core CPI(MoM)',
+                       'MoM: Other Goods & Services', 'MoM: Education & Communication', 'MoM: Recreation',
+                       'MoM: Medical Care', 'MoM: Transport', 'MoM: Apparel', 'MoM: Housing', 'MoM: Food & Beverages'
+                       ]]
+
+    df_oriCPI = pd.read_csv('ori_CPI.csv')
+    df_oriCPI['date'] = pd.to_datetime(df_oriCPI['date'])
+    df_CPI_tr['date'] = pd.to_datetime(df_CPI_tr['date'])
+    df_CPI = pd.concat([df_oriCPI, df_CPI_tr], ignore_index=True)
+    raw_df = df_CPI.copy()
+    raw_df = raw_df[raw_df['date'] >= '1992-01-01']
+
+    return raw_df
+
+
+@st.cache_data(ttl=604800)  # 1주일 (604800초)
+def load_us_ppi_data():
+    """US CPI 데이터를 로드합니다."""
+    codes_PPI = ['530032947', '530032987', '530032897', '530032937',  # PPI YOY, Core YOY, MOM, Core MOM
+                 '530032957', '530032967', '530032977',  # YOY goods, srv, construction
+                 '530032907', '530032917', '530032927']
+
+    df_PPI = Ceic.series(codes_PPI, start_date='2025-01-01').as_pandas()
+    meta_PPI = Ceic.series_metadata(codes_PPI).as_pandas()
+
+    meta_PPI["name"] = (
+        meta_PPI["name"]
+        .str.replace("PPI: sa: Final Demand (FD): YoY", "PPI(YoY)", regex=False)
+        .str.replace("PPI: sa: FD: YoY: excl Food & Energy", "Core PPI(YoY)", regex=False)
+        .str.replace("PPI: sa: Final Demand (FD): MoM", "PPI(MoM)", regex=False)
+        .str.replace("PPI: sa: FD: MoM: excl Food & Energy", "Core PPI(MoM)", regex=False)
+        .str.replace("PPI: sa: FD: ", "", regex=False)
+    )
+
+    df_PPI['id'] = df_PPI['id'].astype(str)
+    meta_PPI['id'] = meta_PPI['id'].astype(str)
+    df_pivot = df_PPI.pivot(index='date', columns='id', values='value')
+    id_to_unit = meta_PPI.set_index('id')['name']
+    df_pivot = df_pivot.rename(columns=lambda x: clean_unit(id_to_unit.get(x, x)))
+    df_PPI_tr = df_pivot.sort_index()
+    df_PPI_tr = df_PPI_tr.reset_index().rename(columns={'index': 'date'})
+    df_PPI_tr = df_PPI_tr[['date',
+                           'PPI(YoY)', 'Core PPI(YoY)',
+                           'YoY: Goods', 'YoY: Services', 'YoY: Construction',
+                           'PPI(MoM)', 'Core PPI(MoM)',
+                           'MoM: Goods', 'MoM: Services', 'MoM: Construction']]
+
+    df_oriPPI = pd.read_csv('ori_PPI.csv')
+    df_oriPPI['date'] = pd.to_datetime(df_oriPPI['date'])
+    df_PPI_tr['date'] = pd.to_datetime(df_PPI_tr['date'])
+    df_PPI = pd.concat([df_oriPPI, df_PPI_tr], ignore_index=True)
+    raw_df = df_PPI.copy()
     raw_df = raw_df[raw_df['date'] >= '1992-01-01']
 
     return raw_df
@@ -948,11 +1035,11 @@ def run_analysis(raw_df):
 
     return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
+
 # 탭 생성
 tab1, tab2 = st.tabs(["US Macro", "Signal Model"])
 
-with tab1:   
-
+with tab1:
     subtab1, subtab2, subtab3, subtab4, subtab5 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI"])
 
     with subtab1:
@@ -1185,7 +1272,7 @@ with tab1:
                 st.plotly_chart(ism_fig, use_container_width=True)
 
     with subtab2:
-        
+
         st.subheader("US ISM Srv. PMI")
 
         # 새로고침 버튼
@@ -1477,7 +1564,8 @@ with tab1:
         )
         insert_row["항목"] = insert_row["항목"].astype("object")
         insert_row.loc[0, "항목"] = "최근 3개월 revise"
-        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]], ignore_index=True)
+        transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
+                               ignore_index=True)
 
         split_idx = transposed.index[transposed["항목"].eq("Private")][0]
         insert_row = pd.DataFrame(
@@ -1694,19 +1782,236 @@ with tab1:
         # PMI 보고 차트 코드 참고하기
 
     with subtab4:
-        
+
         st.subheader("US CPI")
 
+        # 새로고침 버튼
+        col_btn, col_info = st.columns([10, 1])
+        with col_btn:
+            if st.button("새로고침(30초 이내)", key="refresh_cpi", help="최신 데이터를 즉시 불러옵니다"):
+                load_us_cpi_data.clear()
+                st.success("데이터를 새로 불러오는 중...")
+                st.rerun()
+            st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+
+        # 캐싱된 함수 호출
+        raw_df = load_us_cpi_data()
+
+        # 데이터의 최신 날짜 표시
+        if len(raw_df) > 0:
+            latest_date = raw_df['date'].max()
+            st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+
+        # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+        n_show = 6
+        latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+
+        df_for_disp = raw_df.copy()
+        df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+        df_for_disp = df_for_disp.reset_index(drop=True)
+        df_for_disp_disp = df_for_disp.drop(columns=['date'])
+
+        original_columns = list(df_for_disp_disp.columns)
+        # original_columns = ['Non Farm Payroll(sa)']
+
+        transposed = df_for_disp_disp.T
+        transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        transposed.index.name = None
+        transposed.reset_index(inplace=True)
+        transposed.rename(columns={'index': '항목'}, inplace=True)
+
+        transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+        transposed = transposed.sort_values('항목').reset_index(drop=True)
+
+        st.subheader("미국 CPI(sa)")
+
+        gb = GridOptionsBuilder.from_dataframe(transposed)
+        gb.configure_default_column(resizable=True, filter=True, sortable=True)
+
+        for col in date_cols:
+            gb.configure_column(col, cellStyle={"textAlign": "center"})
+
+
+        def get_row_style_js3():
+            return JsCode("""
+                    function(params) {
+                        if (params.node.rowIndex <= 1) {
+                            return {
+                                'backgroundColor': '#1565c0',
+                                'color': 'white',
+                                'fontWeight': 'bold'
+                            }
+                        } else if (params.node.rowIndex >= 2 && params.node.rowIndex <= 7) {
+                            return {
+                                'fontFamily': 'inherit',                                
+                                'paddingLeft': '20px'
+                            }
+                        } else if (params.node.rowIndex >= 8 && params.node.rowIndex <= 9) {
+                            return {
+                                'backgroundColor': '#1565c0',
+                                'color': 'white',
+                                'fontWeight': 'bold'
+                            }
+                        } else if (params.node.rowIndex >= 10) {
+                            return {
+                                'fontFamily': 'inherit',                                
+                                'paddingLeft': '20px'
+                            }
+                        } else {
+                            return {
+                                'fontFamily': 'inherit',
+                                'paddingLeft': '40px'
+                            }
+                        }
+                    }
+                    """)
+
+
+        indent_js = JsCode("""
+                function(params) {
+                    if (params.node.rowIndex === 0) {
+                        return params.value;
+                    } else {
+                        return '\\u00A0\\u00A0' + params.value;
+                    }
+                }
+                """)
+
+        gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_grid_options(getRowStyle=get_row_style_js3())
+
+        AgGrid(
+            transposed,
+            gridOptions=gb.build(),
+            height=400,
+            width='100%',
+            fit_columns_on_grid_load=True,
+            theme="streamlit",
+            allow_unsafe_jscode=True
+        )
+        ##########################
+        # 여기부터 계속하기
+        ##########################
+        # PMI 보고 차트 코드 참고하기
+
     with subtab5:
-        
+
         st.subheader("US PPI")
 
-with tab2:    
+        # 새로고침 버튼
+        col_btn, col_info = st.columns([10, 1])
+        with col_btn:
+            if st.button("새로고침(30초 이내)", key="refresh_ppi", help="최신 데이터를 즉시 불러옵니다"):
+                load_us_ppi_data.clear()
+                st.success("데이터를 새로 불러오는 중...")
+                st.rerun()
+            st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
 
+        # 캐싱된 함수 호출
+        raw_df = load_us_ppi_data()
+
+        # 데이터의 최신 날짜 표시
+        if len(raw_df) > 0:
+            latest_date = raw_df['date'].max()
+            st.caption(f"📅 데이터 최신 날짜: {latest_date.strftime('%Y-%m-%d')}")
+
+        # 최근 6개 날짜 기준으로 데이터 필터링 및 전치
+        n_show = 6
+        latest_dates = raw_df['date'].sort_values(ascending=False).head(n_show).sort_values(ascending=False)
+
+        df_for_disp = raw_df.copy()
+        df_for_disp = df_for_disp[df_for_disp['date'].isin(latest_dates)].sort_values('date', ascending=False)
+        df_for_disp = df_for_disp.reset_index(drop=True)
+        df_for_disp_disp = df_for_disp.drop(columns=['date'])
+
+        original_columns = list(df_for_disp_disp.columns)
+        # original_columns = ['Non Farm Payroll(sa)']
+
+        transposed = df_for_disp_disp.T
+        transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
+        transposed.index.name = None
+        transposed.reset_index(inplace=True)
+        transposed.rename(columns={'index': '항목'}, inplace=True)
+
+        transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
+        transposed = transposed.sort_values('항목').reset_index(drop=True)
+
+        st.subheader("미국 PPI(sa)")
+
+        gb = GridOptionsBuilder.from_dataframe(transposed)
+        gb.configure_default_column(resizable=True, filter=True, sortable=True)
+
+        for col in date_cols:
+            gb.configure_column(col, cellStyle={"textAlign": "center"})
+
+
+        def get_row_style_js4():
+            return JsCode("""
+                            function(params) {
+                                if (params.node.rowIndex <= 1) {
+                                    return {
+                                        'backgroundColor': '#1565c0',
+                                        'color': 'white',
+                                        'fontWeight': 'bold'
+                                    }
+                                } else if (params.node.rowIndex >= 2 && params.node.rowIndex <= 4) {
+                                    return {
+                                        'fontFamily': 'inherit',                                
+                                        'paddingLeft': '20px'
+                                    }
+                                } else if (params.node.rowIndex >= 5 && params.node.rowIndex <= 6) {
+                                    return {
+                                        'backgroundColor': '#1565c0',
+                                        'color': 'white',
+                                        'fontWeight': 'bold'
+                                    }
+                                } else if (params.node.rowIndex >= 7) {
+                                    return {
+                                        'fontFamily': 'inherit',                                
+                                        'paddingLeft': '20px'
+                                    }
+                                } else {
+                                    return {
+                                        'fontFamily': 'inherit',
+                                        'paddingLeft': '40px'
+                                    }
+                                }
+                            }
+                            """)
+
+
+        indent_js = JsCode("""
+                        function(params) {
+                            if (params.node.rowIndex === 0) {
+                                return params.value;
+                            } else {
+                                return '\\u00A0\\u00A0' + params.value;
+                            }
+                        }
+                        """)
+
+        gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_grid_options(getRowStyle=get_row_style_js4())
+
+        AgGrid(
+            transposed,
+            gridOptions=gb.build(),
+            height=400,
+            width='100%',
+            fit_columns_on_grid_load=True,
+            theme="streamlit",
+            allow_unsafe_jscode=True
+        )
+        ##########################
+        # 여기부터 계속하기
+        ##########################
+        # PMI 보고 차트 코드 참고하기
+
+with tab2:
     subtab1, subtab2 = st.tabs(["FDS", "TransformerFX"])
 
     with subtab1:
-        
+
         st.subheader("Fractal Dimension Trading Analysis")
 
         # 새로고침 버튼
@@ -1897,7 +2202,8 @@ with tab2:
                 extension_reason = trade.get('연장사유', '')
                 extension_dates_str = trade.get('연장발생일', '')
 
-                if latest_signal_for_case is None or signal_date > pd.to_datetime(latest_signal_for_case['signal_date']):
+                if latest_signal_for_case is None or signal_date > pd.to_datetime(
+                        latest_signal_for_case['signal_date']):
                     current_price = None
                     for ts_cfg_key, ts_df in selected_timeseries_results.items():
                         ts_col, _, _, _, _, _, _, _ = ts_cfg_key
@@ -2128,8 +2434,3 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
-        
-
-
-
-
