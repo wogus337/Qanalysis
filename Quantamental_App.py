@@ -1917,8 +1917,9 @@ with tab2:
         today_str = today.strftime('%Y-%m-%d')
 
         case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
-        st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
-
+        #st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
+        st.markdown(f"#### **(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)**")
+        
         if len(selected_summary_df) > 0:
             display_df = selected_summary_df.copy()
             display_df = display_df.rename(columns={
@@ -2047,7 +2048,8 @@ with tab2:
 
         # 각 지표별 상태 표시
         st.markdown("---")
-        st.subheader("(2) 지표별 현재 상태")
+        #st.subheader("(2) 지표별 현재 상태")
+        st.markdown("#### **(2) 분석 경우별 최근 Signal**")
 
         indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
                            'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
@@ -2223,7 +2225,8 @@ with tab2:
 
         # 차트 표시
         st.markdown("---")
-        st.subheader("(3) 시계열 차트")
+        #st.subheader("(3) 시계열 차트")
+        st.markdown("#### **(3) 시계열 차트**")
         st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
 
         indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
@@ -2312,6 +2315,7 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
 
