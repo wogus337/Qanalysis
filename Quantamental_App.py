@@ -1722,8 +1722,7 @@ with tab1:
         df_for_disp = df_for_disp.reset_index(drop=True)
         df_for_disp_disp = df_for_disp.drop(columns=['date'])
 
-        original_columns = list(df_for_disp_disp.columns)
-        # original_columns = ['Non Farm Payroll(sa)']
+        original_columns = list(df_for_disp_disp.columns)        
 
         transposed = df_for_disp_disp.T
         transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
@@ -1731,6 +1730,7 @@ with tab1:
         transposed.reset_index(inplace=True)
         transposed.rename(columns={'index': '항목'}, inplace=True)
 
+        date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
@@ -1827,6 +1827,7 @@ with tab1:
         transposed.reset_index(inplace=True)
         transposed.rename(columns={'index': '항목'}, inplace=True)
 
+        date_cols = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
@@ -2311,5 +2312,6 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
