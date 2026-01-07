@@ -1778,7 +1778,7 @@ with tab1:
             transposed,
             gridOptions=gb.build(),
             height=400,
-            width='60%',
+            width='100%',
             fit_columns_on_grid_load=True,
             theme="streamlit",
             allow_unsafe_jscode=True
@@ -1875,7 +1875,7 @@ with tab1:
             transposed,
             gridOptions=gb.build(),
             height=400,
-            width='60%',
+            width='100%',
             fit_columns_on_grid_load=True,
             theme="streamlit",
             allow_unsafe_jscode=True
@@ -2312,6 +2312,7 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
 
