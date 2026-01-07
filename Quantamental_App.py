@@ -1132,7 +1132,7 @@ with tab1:
         }
         """)
 
-        gb.configure_column("항목", cellRenderer=indent_js)
+        #gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js())
 
         AgGrid(
@@ -1362,7 +1362,7 @@ with tab1:
         }
         """)
 
-        gb.configure_column("항목", cellRenderer=indent_js)
+        #gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js())
 
         AgGrid(
@@ -1764,7 +1764,7 @@ with tab1:
         }
         """)
 
-        gb.configure_column("항목", cellRenderer=indent_js)
+        #gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js2())
 
         AgGrid(
@@ -1877,7 +1877,7 @@ with tab1:
                 }
                 """)
 
-        gb.configure_column("항목", cellRenderer=indent_js)
+        #gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js3())
 
         AgGrid(
@@ -1990,7 +1990,7 @@ with tab1:
                         }
                         """)
 
-        gb.configure_column("항목", cellRenderer=indent_js)
+        #gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js4())
 
         AgGrid(
@@ -2434,3 +2434,4 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
