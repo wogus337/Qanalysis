@@ -1094,7 +1094,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        st.subheader("미국 ISM 제조업 PMI")
+        #st.subheader("미국 ISM 제조업 PMI")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1323,7 +1323,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        st.subheader("미국 ISM 서비스업 PMI")
+        #st.subheader("미국 ISM 서비스업 PMI")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1628,7 +1628,7 @@ with tab1:
         transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
                                ignore_index=True)
 
-        st.subheader("미국 비농업고용(sa)")
+        #st.subheader("미국 비농업고용(sa)")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1734,7 +1734,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        st.subheader("미국 CPI(sa)")
+        #st.subheader("미국 CPI(sa)")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1831,7 +1831,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        st.subheader("미국 PPI(sa)")
+        #st.subheader("미국 PPI(sa)")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -2312,6 +2312,7 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
 
