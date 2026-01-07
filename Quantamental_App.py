@@ -1114,8 +1114,7 @@ with tab1:
                     }
                 } else {
                     return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '20px'
+                        'fontFamily': 'inherit'                        
                     }
                 }
             }
@@ -1132,7 +1131,7 @@ with tab1:
         }
         """)
 
-        #gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js())
 
         AgGrid(
@@ -1344,8 +1343,7 @@ with tab1:
                     }
                 } else {
                     return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '20px'
+                        'fontFamily': 'inherit'
                     }
                 }
             }
@@ -1362,7 +1360,7 @@ with tab1:
         }
         """)
 
-        #gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js())
 
         AgGrid(
@@ -1648,106 +1646,16 @@ with tab1:
                         'color': 'white',
                         'fontWeight': 'bold'
                     }
-                } else if (params.node.rowIndex === 1) {
+                } else if (params.node.rowIndex === 1 || params.node.rowIndex === 5 || params.node.rowIndex === 8 || params.node.rowIndex === 11 || params.node.rowIndex === 26 ||
+                           params.node.rowIndex === 30 || params.node.rowIndex === 33 || params.node.rowIndex === 36) {
                     return {
                         'fontFamily': 'inherit',
                         'backgroundColor': '#BFBFBF',
-                        'color': 'black',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 2 && params.node.rowIndex <= 4) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 5) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',                      
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 6 && params.node.rowIndex <= 7) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 8) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 9 && params.node.rowIndex <= 10) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 11) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 12 && params.node.rowIndex <= 25) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 26) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 27 && params.node.rowIndex <= 29) {
-                    return {
-                        'fontFamily': 'inherit',                        
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 30) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',                        
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 31 && params.node.rowIndex <= 32) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 33) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',                                              
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 34 && params.node.rowIndex <= 35) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
-                    }
-                } else if (params.node.rowIndex === 36) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'backgroundColor': '#BFBFBF',
-                        'color': 'black',                                                
-                        'paddingLeft': '20px'
-                    }
-                } else if (params.node.rowIndex >= 37 && params.node.rowIndex <= 38) {
-                    return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
+                        'color': 'black'
                     }
                 } else {
                     return {
-                        'fontFamily': 'inherit',
-                        'paddingLeft': '40px'
+                        'fontFamily': 'inherit'
                     }
                 }
             }
@@ -1758,13 +1666,16 @@ with tab1:
         function(params) {
             if (params.node.rowIndex === 0) {
                 return params.value;
-            } else {
+            } else if (params.node.rowIndex === 1 || params.node.rowIndex === 5 || params.node.rowIndex === 8 || params.node.rowIndex === 11 || params.node.rowIndex === 26 ||
+                           params.node.rowIndex === 30 || params.node.rowIndex === 33 || params.node.rowIndex === 36) {
                 return '\\u00A0\\u00A0' + params.value;
+            } else {
+                return '\\u00A0\\u00A0\\u00A0\\u00A0' + params.value;
             }
         }
         """)
 
-        #gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js2())
 
         AgGrid(
@@ -1835,41 +1746,24 @@ with tab1:
         def get_row_style_js3():
             return JsCode("""
                     function(params) {
-                        if (params.node.rowIndex <= 1) {
+                        if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 8 && params.node.rowIndex <= 9)) {
                             return {
                                 'backgroundColor': '#1565c0',
                                 'color': 'white',
                                 'fontWeight': 'bold'
-                            }
-                        } else if (params.node.rowIndex >= 2 && params.node.rowIndex <= 7) {
-                            return {
-                                'fontFamily': 'inherit',                                
-                                'paddingLeft': '20px'
-                            }
-                        } else if (params.node.rowIndex >= 8 && params.node.rowIndex <= 9) {
-                            return {
-                                'backgroundColor': '#1565c0',
-                                'color': 'white',
-                                'fontWeight': 'bold'
-                            }
-                        } else if (params.node.rowIndex >= 10) {
-                            return {
-                                'fontFamily': 'inherit',                                
-                                'paddingLeft': '20px'
                             }
                         } else {
                             return {
-                                'fontFamily': 'inherit',
-                                'paddingLeft': '40px'
+                                'fontFamily': 'inherit'                                                               
                             }
-                        }
+                        } 
                     }
                     """)
 
 
         indent_js = JsCode("""
                 function(params) {
-                    if (params.node.rowIndex === 0) {
+                    if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 8 && params.node.rowIndex <= 9)) {
                         return params.value;
                     } else {
                         return '\\u00A0\\u00A0' + params.value;
@@ -1877,7 +1771,7 @@ with tab1:
                 }
                 """)
 
-        #gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js3())
 
         AgGrid(
@@ -1947,50 +1841,33 @@ with tab1:
 
         def get_row_style_js4():
             return JsCode("""
-                            function(params) {
-                                if (params.node.rowIndex <= 1) {
-                                    return {
-                                        'backgroundColor': '#1565c0',
-                                        'color': 'white',
-                                        'fontWeight': 'bold'
-                                    }
-                                } else if (params.node.rowIndex >= 2 && params.node.rowIndex <= 4) {
-                                    return {
-                                        'fontFamily': 'inherit',                                
-                                        'paddingLeft': '20px'
-                                    }
-                                } else if (params.node.rowIndex >= 5 && params.node.rowIndex <= 6) {
-                                    return {
-                                        'backgroundColor': '#1565c0',
-                                        'color': 'white',
-                                        'fontWeight': 'bold'
-                                    }
-                                } else if (params.node.rowIndex >= 7) {
-                                    return {
-                                        'fontFamily': 'inherit',                                
-                                        'paddingLeft': '20px'
-                                    }
-                                } else {
-                                    return {
-                                        'fontFamily': 'inherit',
-                                        'paddingLeft': '40px'
-                                    }
-                                }
+                    function(params) {
+                        if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 5 && params.node.rowIndex <= 6)) {
+                            return {
+                                'backgroundColor': '#1565c0',
+                                'color': 'white',
+                                'fontWeight': 'bold'
                             }
-                            """)
+                        } else {
+                            return {
+                                'fontFamily': 'inherit'                                                               
+                            }
+                        } 
+                    }
+                    """)
 
 
         indent_js = JsCode("""
-                        function(params) {
-                            if (params.node.rowIndex === 0) {
-                                return params.value;
-                            } else {
-                                return '\\u00A0\\u00A0' + params.value;
-                            }
-                        }
-                        """)
+                function(params) {
+                    if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 5 && params.node.rowIndex <= 6)) {
+                        return params.value;
+                    } else {
+                        return '\\u00A0\\u00A0' + params.value;
+                    }
+                }
+                """)
 
-        #gb.configure_column("항목", cellRenderer=indent_js)
+        gb.configure_column("항목", cellRenderer=indent_js)
         gb.configure_grid_options(getRowStyle=get_row_style_js4())
 
         AgGrid(
@@ -2434,4 +2311,5 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
