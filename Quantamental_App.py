@@ -1734,7 +1734,7 @@ with tab1:
                 y=nfp_plot_df['cumulative_change'],
                 mode='lines+markers',
                 name='누적 증감',
-                line=dict(color='#146aff', width=2),
+                line=dict(color='rgb(4, 59, 114)', width=2),
                 yaxis='y2'
             ))
 
@@ -1867,7 +1867,7 @@ with tab1:
                         y=pvg_plot_df['Private_cumulative'],
                         mode='lines+markers',
                         name='Private (누적)',
-                        line=dict(color='#146aff', width=2),
+                        line=dict(color='rgb(245, 130, 32)', width=2),
                         yaxis='y2'
                     ))
                     fig_pvg.add_trace(go.Scatter(
@@ -1875,7 +1875,7 @@ with tab1:
                         y=pvg_plot_df['Government_cumulative'],
                         mode='lines+markers',
                         name='Government (누적)',
-                        line=dict(color='#f0580a', width=2),
+                        line=dict(color='rgb(4, 59, 114)', width=2),
                         yaxis='y2'
                     ))
                     fig_pvg.update_layout(
@@ -1984,7 +1984,7 @@ with tab1:
                         y=gvs_plot_df['Goods_cumulative'],
                         mode='lines+markers',
                         name='Goods Producing (누적)',
-                        line=dict(color='#146aff', width=2),
+                        line=dict(color='rgb(245, 130, 32)', width=2),
                         yaxis='y2'
                     ))
                     fig_gvs.add_trace(go.Scatter(
@@ -1992,7 +1992,7 @@ with tab1:
                         y=gvs_plot_df['Service_cumulative'],
                         mode='lines+markers',
                         name='Service Providing (누적)',
-                        line=dict(color='#f0580a', width=2),
+                        line=dict(color='rgb(4, 59, 114)', width=2),
                         yaxis='y2'
                     ))
                     fig_gvs.update_layout(
@@ -2070,72 +2070,186 @@ with tab1:
                     sec_plot_df_sorted[f'{col}_cumulative'] = sec_plot_df_sorted[f'{col}_change'].cumsum().fillna(0)
                     sec_plot_df_sorted[f'{col}_share'] = (sec_plot_df_sorted[col] / sec_plot_df_sorted['Non Farm Payroll(sa)']) * 100
 
-            col_sec_chart1, col_sec_chart2, col_sec_chart3 = st.columns(3)
+            # 최근 1개 증감 막대 그래프
+            fig_sec_latest = go.Figure()
+            sorted_sectors = sorted(latest_changes.items(), key=lambda x: x[1], reverse=True)
+            sector_names = [s[0] for s in sorted_sectors]
+            sector_values = [s[1] for s in sorted_sectors]
+            colors = ['rgb(245,130,32)' if v >= 0 else 'rgb(4,59,114)' for v in sector_values]
+            fig_sec_latest.add_trace(go.Bar(
+                x=sector_names,
+                y=sector_values,
+                marker_color=colors
+            ))
+            fig_sec_latest.update_layout(
+                xaxis_title="업종",
+                yaxis_title="최근 1개월 증감",
+                margin=dict(l=20, r=20, t=40, b=200),
+                xaxis=dict(tickangle=-45)
+            )
+            st.plotly_chart(fig_sec_latest, use_container_width=True)
 
-            with col_sec_chart1:
-                fig_sec_latest = go.Figure()
-                sorted_sectors = sorted(latest_changes.items(), key=lambda x: x[1], reverse=True)
-                sector_names = [s[0] for s in sorted_sectors]
-                sector_values = [s[1] for s in sorted_sectors]
-                colors = ['rgb(245,130,32)' if v >= 0 else 'rgb(4,59,114)' for v in sector_values]
-                fig_sec_latest.add_trace(go.Bar(
-                    x=sector_names,
-                    y=sector_values,
-                    marker_color=colors
+            # 누적 증감 라인 차트
+            fig_sec_cum = go.Figure()
+            line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+            for i, col in enumerate(sector_cols):
+                if f'{col}_cumulative' in sec_plot_df_sorted.columns:
+                    fig_sec_cum.add_trace(go.Scatter(
+                        x=sec_plot_df_sorted['date'],
+                        y=sec_plot_df_sorted[f'{col}_cumulative'],
+                        mode='lines',
+                        name=col,
+                        line=dict(color=line_colors[i % len(line_colors)], width=1.5)
+                    ))
+            fig_sec_cum.update_layout(
+                xaxis_title="날짜",
+                yaxis_title="누적 증감",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+            )
+            st.plotly_chart(fig_sec_cum, use_container_width=True)
+
+            # 비중 라인 차트
+            fig_sec_share = go.Figure()
+            for i, col in enumerate(sector_cols):
+                if f'{col}_share' in sec_plot_df_sorted.columns:
+                    fig_sec_share.add_trace(go.Scatter(
+                        x=sec_plot_df_sorted['date'],
+                        y=sec_plot_df_sorted[f'{col}_share'],
+                        mode='lines',
+                        name=col,
+                        line=dict(color=line_colors[i % len(line_colors)], width=1.5)
+                    ))
+            fig_sec_share.update_layout(
+                xaxis_title="날짜",
+                yaxis_title="비중 (%)",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+            )
+            st.plotly_chart(fig_sec_share, use_container_width=True)
+
+        # 6. Government - Sub (Federal, State, Local)
+        st.markdown("##### **6. Government - Sub**")
+        col_gov1, col_gov2 = st.columns(2)
+        with col_gov1:
+            gov_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="gov_chart_start")
+        with col_gov2:
+            gov_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="gov_chart_end")
+
+        gov_start_dt = pd.to_datetime(gov_start)
+        gov_end_dt = pd.to_datetime(gov_end)
+        if gov_start_dt > gov_end_dt:
+            gov_end_dt = gov_start_dt
+
+        gov_mask = (raw_df['date'] >= gov_start_dt) & (raw_df['date'] <= gov_end_dt)
+        gov_plot_df = raw_df.loc[gov_mask, ['date', 'Federal (FG)', 'State (SG)', 'Local (LG)']].copy().sort_values('date')
+
+        if len(gov_plot_df) > 1:
+            gov_plot_df['Federal_change'] = gov_plot_df['Federal (FG)'].diff()
+            gov_plot_df['State_change'] = gov_plot_df['State (SG)'].diff()
+            gov_plot_df['Local_change'] = gov_plot_df['Local (LG)'].diff()
+            gov_plot_df['Federal_cumulative'] = gov_plot_df['Federal_change'].cumsum().fillna(0)
+            gov_plot_df['State_cumulative'] = gov_plot_df['State_change'].cumsum().fillna(0)
+            gov_plot_df['Local_cumulative'] = gov_plot_df['Local_change'].cumsum().fillna(0)
+
+            col_gov_chart1, col_gov_chart2 = st.columns(2)
+
+            with col_gov_chart1:
+                fig_gov = go.Figure()
+                fig_gov.add_trace(go.Bar(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['Federal_change'],
+                    name='Federal (FG) (월간)',
+                    marker_color='rgb(245,130,32)',
+                    yaxis='y'
                 ))
-                fig_sec_latest.update_layout(
-                    xaxis_title="업종",
-                    yaxis_title="최근 1개월 증감",
-                    margin=dict(l=20, r=20, t=40, b=200),
-                    xaxis=dict(tickangle=-45),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
-                )
-                st.plotly_chart(fig_sec_latest, use_container_width=True)
-
-            with col_sec_chart2:
-                fig_sec_cum = go.Figure()
-                line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
-                for i, col in enumerate(sector_cols):
-                    if f'{col}_cumulative' in sec_plot_df_sorted.columns:
-                        fig_sec_cum.add_trace(go.Scatter(
-                            x=sec_plot_df_sorted['date'],
-                            y=sec_plot_df_sorted[f'{col}_cumulative'],
-                            mode='lines',
-                            name=col,
-                            line=dict(color=line_colors[i % len(line_colors)], width=1.5)
-                        ))
-                fig_sec_cum.update_layout(
+                fig_gov.add_trace(go.Bar(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['State_change'],
+                    name='State (SG) (월간)',
+                    marker_color='rgb(4,59,114)',
+                    yaxis='y'
+                ))
+                fig_gov.add_trace(go.Bar(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['Local_change'],
+                    name='Local (LG) (월간)',
+                    marker_color='rgb(0,169,206)',
+                    yaxis='y'
+                ))
+                fig_gov.add_trace(go.Scatter(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['Federal_cumulative'],
+                    mode='lines+markers',
+                    name='Federal (FG) (누적)',
+                    line=dict(color='rgb(245, 130, 32)', width=2),
+                    yaxis='y2'
+                ))
+                fig_gov.add_trace(go.Scatter(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['State_cumulative'],
+                    mode='lines+markers',
+                    name='State (SG) (누적)',
+                    line=dict(color='rgb(4, 59, 114)', width=2),
+                    yaxis='y2'
+                ))
+                fig_gov.add_trace(go.Scatter(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['Local_cumulative'],
+                    mode='lines+markers',
+                    name='Local (LG) (누적)',
+                    line=dict(color='rgb(0, 169, 206)', width=2),
+                    yaxis='y2'
+                ))
+                fig_gov.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="누적 증감",
-                    margin=dict(l=20, r=20, t=40, b=200),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+                    yaxis=dict(title="월간 변화량", side="left"),
+                    yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                    legend_title="항목"
                 )
-                st.plotly_chart(fig_sec_cum, use_container_width=True)
+                st.plotly_chart(fig_gov, use_container_width=True)
 
-            with col_sec_chart3:
-                fig_sec_share = go.Figure()
-                for i, col in enumerate(sector_cols):
-                    if f'{col}_share' in sec_plot_df_sorted.columns:
-                        fig_sec_share.add_trace(go.Scatter(
-                            x=sec_plot_df_sorted['date'],
-                            y=sec_plot_df_sorted[f'{col}_share'],
-                            mode='lines',
-                            name=col,
-                            line=dict(color=line_colors[i % len(line_colors)], width=1.5)
-                        ))
-                fig_sec_share.update_layout(
+            with col_gov_chart2:
+                gov_nfp_df = raw_df.loc[gov_mask, ['date', 'Non Farm Payroll(sa)']].copy().sort_values('date')
+                gov_plot_df['Federal_share'] = (gov_plot_df['Federal (FG)'] / gov_nfp_df['Non Farm Payroll(sa)'].values) * 100
+                gov_plot_df['State_share'] = (gov_plot_df['State (SG)'] / gov_nfp_df['Non Farm Payroll(sa)'].values) * 100
+                gov_plot_df['Local_share'] = (gov_plot_df['Local (LG)'] / gov_nfp_df['Non Farm Payroll(sa)'].values) * 100
+                
+                fig_gov_share = go.Figure()
+                fig_gov_share.add_trace(go.Scatter(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['Federal_share'],
+                    mode='lines+markers',
+                    name='Federal (FG) 비중',
+                    line=dict(color='#146aff', width=2)
+                ))
+                fig_gov_share.add_trace(go.Scatter(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['State_share'],
+                    mode='lines+markers',
+                    name='State (SG) 비중',
+                    line=dict(color='#f0580a', width=2)
+                ))
+                fig_gov_share.add_trace(go.Scatter(
+                    x=gov_plot_df['date'],
+                    y=gov_plot_df['Local_share'],
+                    mode='lines+markers',
+                    name='Local (LG) 비중',
+                    line=dict(color='#489904', width=2)
+                ))
+                fig_gov_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=200),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                    legend_title="항목"
                 )
-                st.plotly_chart(fig_sec_share, use_container_width=True)
+                st.plotly_chart(fig_gov_share, use_container_width=True)
 
-        # 6. Federal-sub, State-sub, Local-sub 차트
-        st.markdown("##### **6. Government - Sub**")
-
-        # Federal-sub
-        st.markdown("**Federal - Sub**")
+        # 7. Federal-sub
+        st.markdown("##### **7. Federal - Sub**")
         col_fed1, col_fed2, col_fed3 = st.columns(3)
         with col_fed1:
             fed_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="fed_chart_start")
@@ -2205,7 +2319,7 @@ with tab1:
                         y=fed_plot_df['FD_cumulative'],
                         mode='lines+markers',
                         name='FD (누적)',
-                        line=dict(color='#146aff', width=2),
+                        line=dict(color='rgb(245, 130, 32)', width=2),
                         yaxis='y2'
                     ))
                     fig_fed.add_trace(go.Scatter(
@@ -2213,7 +2327,7 @@ with tab1:
                         y=fed_plot_df['UP_cumulative'],
                         mode='lines+markers',
                         name='UP (누적)',
-                        line=dict(color='#f0580a', width=2),
+                        line=dict(color='rgb(4, 59, 114)', width=2),
                         yaxis='y2'
                     ))
                     fig_fed.update_layout(
@@ -2251,8 +2365,8 @@ with tab1:
                 )
                 st.plotly_chart(fig_fed_share, use_container_width=True)
 
-        # State-sub
-        st.markdown("**State - Sub**")
+        # 8. State-sub
+        st.markdown("##### **8. State - Sub**")
         col_st1, col_st2, col_st3 = st.columns(3)
         with col_st1:
             st_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="st_chart_start")
@@ -2322,7 +2436,7 @@ with tab1:
                         y=st_plot_df['SG_Edu_cumulative'],
                         mode='lines+markers',
                         name='SG: Education (누적)',
-                        line=dict(color='#146aff', width=2),
+                        line=dict(color='rgb(245, 130, 32)', width=2),
                         yaxis='y2'
                     ))
                     fig_st.add_trace(go.Scatter(
@@ -2330,7 +2444,7 @@ with tab1:
                         y=st_plot_df['SG_SE_cumulative'],
                         mode='lines+markers',
                         name='SG: excl Education (누적)',
-                        line=dict(color='#f0580a', width=2),
+                        line=dict(color='rgb(4, 59, 114)', width=2),
                         yaxis='y2'
                     ))
                     fig_st.update_layout(
@@ -2368,8 +2482,8 @@ with tab1:
                 )
                 st.plotly_chart(fig_st_share, use_container_width=True)
 
-        # Local-sub
-        st.markdown("**Local - Sub**")
+        # 9. Local-sub
+        st.markdown("##### **9. Local - Sub**")
         col_loc1, col_loc2, col_loc3 = st.columns(3)
         with col_loc1:
             loc_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="loc_chart_start")
@@ -2439,7 +2553,7 @@ with tab1:
                         y=loc_plot_df['LG_Edu_cumulative'],
                         mode='lines+markers',
                         name='LG: Education (누적)',
-                        line=dict(color='#146aff', width=2),
+                        line=dict(color='rgb(245, 130, 32)', width=2),
                         yaxis='y2'
                     ))
                     fig_loc.add_trace(go.Scatter(
@@ -2447,7 +2561,7 @@ with tab1:
                         y=loc_plot_df['LG_LE_cumulative'],
                         mode='lines+markers',
                         name='LG: excl Education (누적)',
-                        line=dict(color='#f0580a', width=2),
+                        line=dict(color='rgb(4, 59, 114)', width=2),
                         yaxis='y2'
                     ))
                     fig_loc.update_layout(
