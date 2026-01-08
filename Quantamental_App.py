@@ -1872,29 +1872,27 @@ with tab1:
                 st.plotly_chart(fig_pvg, use_container_width=True)
 
             with col_pvg_chart2:
-                # 누적 영역형 차트를 위해 누적 값 계산
-                pvg_plot_df['Private_share_cumulative'] = pvg_plot_df['Private_share'] + pvg_plot_df['Government_share']
-                
                 fig_pvg_share = go.Figure()
                 fig_pvg_share.add_trace(go.Scatter(
                     x=pvg_plot_df['date'],
                     y=pvg_plot_df['Private_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='Private 비중',
-                    fill='tozeroy',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_pvg_share.add_trace(go.Scatter(
                     x=pvg_plot_df['date'],
-                    y=pvg_plot_df['Private_share_cumulative'],
-                    mode='lines',
+                    y=pvg_plot_df['Government_share'],
+                    mode='lines+markers',
                     name='Government 비중',
-                    fill='tonexty',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_pvg_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="Private 비중 (%)", side="left"),
+                    yaxis2=dict(title="Government 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -1977,29 +1975,27 @@ with tab1:
                 st.plotly_chart(fig_gvs, use_container_width=True)
 
             with col_gvs_chart2:
-                # 누적 영역형 차트를 위해 누적 값 계산
-                gvs_plot_df['Goods_share_cumulative'] = gvs_plot_df['Goods_share'] + gvs_plot_df['Service_share']
-                
                 fig_gvs_share = go.Figure()
                 fig_gvs_share.add_trace(go.Scatter(
                     x=gvs_plot_df['date'],
                     y=gvs_plot_df['Goods_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='Goods Producing 비중',
-                    fill='tozeroy',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_gvs_share.add_trace(go.Scatter(
                     x=gvs_plot_df['date'],
-                    y=gvs_plot_df['Goods_share_cumulative'],
-                    mode='lines',
+                    y=gvs_plot_df['Service_share'],
+                    mode='lines+markers',
                     name='Service Providing 비중',
-                    fill='tonexty',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_gvs_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="Goods Producing 비중 (%)", side="left"),
+                    yaxis2=dict(title="Service Providing 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -2085,9 +2081,9 @@ with tab1:
                 xaxis_title="업종",
                 yaxis=dict(title="최근 1개월 증감", side="left"),
                 yaxis2=dict(title="비중 (%)", side="right", overlaying="y"),
-                margin=dict(l=20, r=20, t=40, b=200),
+                margin=dict(l=20, r=20, t=60, b=200),
                 xaxis=dict(tickangle=-45),
-                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+                legend=dict(orientation="h", yanchor="top", y=1.05, xanchor="center", x=0.5)
             )
             st.plotly_chart(fig_sec_latest, use_container_width=True)
 
@@ -2223,33 +2219,29 @@ with tab1:
                 gov_plot_df['Federal_share'] = (gov_plot_df['Federal (FG)'] / gov_plot_df['Government'].values) * 100
                 gov_plot_df['State_share'] = (gov_plot_df['State (SG)'] / gov_plot_df['Government'].values) * 100
                 gov_plot_df['Local_share'] = (gov_plot_df['Local (LG)'] / gov_plot_df['Government'].values) * 100
-                gov_plot_df['State_share_cumulative'] = gov_plot_df['Federal_share'] + gov_plot_df['State_share']
                 
                 fig_gov_share = go.Figure()
                 fig_gov_share.add_trace(go.Scatter(
                     x=gov_plot_df['date'],
                     y=gov_plot_df['Federal_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='Federal (FG) 비중',
-                    fill='tozeroy',
                     line=dict(color='#146aff', width=2),
                     yaxis='y'
                 ))
                 fig_gov_share.add_trace(go.Scatter(
                     x=gov_plot_df['date'],
-                    y=gov_plot_df['State_share_cumulative'],
-                    mode='lines',
+                    y=gov_plot_df['State_share'],
+                    mode='lines+markers',
                     name='State (SG) 비중',
-                    fill='tonexty',
                     line=dict(color='#f0580a', width=2),
                     yaxis='y'
                 ))
                 fig_gov_share.add_trace(go.Scatter(
                     x=gov_plot_df['date'],
                     y=gov_plot_df['Local_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='Local (LG) 비중',
-                    fill='tozeroy',
                     line=dict(color='#489904', width=2),
                     yaxis='y2'
                 ))
@@ -2263,8 +2255,8 @@ with tab1:
                 )
                 st.plotly_chart(fig_gov_share, use_container_width=True)
 
-        # 7. Federal-sub
-        st.markdown("##### **7. Federal - Sub**")
+        # 6-1. Federal-sub
+        st.markdown("##### **6-1. Federal - Sub**")
         col_fed1, col_fed2, col_fed3 = st.columns(3)
         with col_fed1:
             fed_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="fed_chart_start")
@@ -2339,37 +2331,35 @@ with tab1:
                 st.plotly_chart(fig_fed, use_container_width=True)
 
             with col_fed_chart2:
-                # 누적 영역형 차트를 위해 누적 값 계산
-                fed_plot_df['FD_share_cumulative'] = fed_plot_df['FD_share'] + fed_plot_df['UP_share']
-                
                 fig_fed_share = go.Figure()
                 fig_fed_share.add_trace(go.Scatter(
                     x=fed_plot_df['date'],
                     y=fed_plot_df['FD_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='FG: excl US Postal Service (FD) 비중',
-                    fill='tozeroy',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_fed_share.add_trace(go.Scatter(
                     x=fed_plot_df['date'],
-                    y=fed_plot_df['FD_share_cumulative'],
-                    mode='lines',
+                    y=fed_plot_df['UP_share'],
+                    mode='lines+markers',
                     name='FG: US Postal Service (UP) 비중',
-                    fill='tonexty',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_fed_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="FG: excl US Postal Service (FD) 비중 (%)", side="left"),
+                    yaxis2=dict(title="FG: US Postal Service (UP) 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_fed_share, use_container_width=True)
 
-        # 8. State-sub
-        st.markdown("##### **8. State - Sub**")
+        # 6-2. State-sub
+        st.markdown("##### **6-2. State - Sub**")
         col_st1, col_st2, col_st3 = st.columns(3)
         with col_st1:
             st_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="st_chart_start")
@@ -2444,37 +2434,35 @@ with tab1:
                 st.plotly_chart(fig_st, use_container_width=True)
 
             with col_st_chart2:
-                # 누적 영역형 차트를 위해 누적 값 계산
-                st_plot_df['SG_Edu_share_cumulative'] = st_plot_df['SG_Edu_share'] + st_plot_df['SG_SE_share']
-                
                 fig_st_share = go.Figure()
                 fig_st_share.add_trace(go.Scatter(
                     x=st_plot_df['date'],
                     y=st_plot_df['SG_Edu_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='SG: Education 비중',
-                    fill='tozeroy',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_st_share.add_trace(go.Scatter(
                     x=st_plot_df['date'],
-                    y=st_plot_df['SG_Edu_share_cumulative'],
-                    mode='lines',
+                    y=st_plot_df['SG_SE_share'],
+                    mode='lines+markers',
                     name='SG: excl Education 비중',
-                    fill='tonexty',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_st_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="SG: Education 비중 (%)", side="left"),
+                    yaxis2=dict(title="SG: excl Education 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_st_share, use_container_width=True)
 
-        # 9. Local-sub
-        st.markdown("##### **9. Local - Sub**")
+        # 6-3. Local-sub
+        st.markdown("##### **6-3. Local - Sub**")
         col_loc1, col_loc2, col_loc3 = st.columns(3)
         with col_loc1:
             loc_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="loc_chart_start")
@@ -2549,29 +2537,27 @@ with tab1:
                 st.plotly_chart(fig_loc, use_container_width=True)
 
             with col_loc_chart2:
-                # 누적 영역형 차트를 위해 누적 값 계산
-                loc_plot_df['LG_Edu_share_cumulative'] = loc_plot_df['LG_Edu_share'] + loc_plot_df['LG_LE_share']
-                
                 fig_loc_share = go.Figure()
                 fig_loc_share.add_trace(go.Scatter(
                     x=loc_plot_df['date'],
                     y=loc_plot_df['LG_Edu_share'],
-                    mode='lines',
+                    mode='lines+markers',
                     name='LG: Education 비중',
-                    fill='tozeroy',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_loc_share.add_trace(go.Scatter(
                     x=loc_plot_df['date'],
-                    y=loc_plot_df['LG_Edu_share_cumulative'],
-                    mode='lines',
+                    y=loc_plot_df['LG_LE_share'],
+                    mode='lines+markers',
                     name='LG: excl Education 비중',
-                    fill='tonexty',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_loc_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="LG: Education 비중 (%)", side="left"),
+                    yaxis2=dict(title="LG: excl Education 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
