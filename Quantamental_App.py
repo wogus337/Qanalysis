@@ -1848,40 +1848,23 @@ with tab1:
                         legend_title="항목"
                     )
                 else:
-                    fig_pvg.add_trace(go.Bar(
-                        x=pvg_plot_df['date'],
-                        y=pvg_plot_df['Private_change'],
-                        name='Private (월간)',
-                        marker_color='rgb(245,130,32)',
-                        yaxis='y'
-                    ))
-                    fig_pvg.add_trace(go.Bar(
-                        x=pvg_plot_df['date'],
-                        y=pvg_plot_df['Government_change'],
-                        name='Government (월간)',
-                        marker_color='rgb(4,59,114)',
-                        yaxis='y'
-                    ))
                     fig_pvg.add_trace(go.Scatter(
                         x=pvg_plot_df['date'],
                         y=pvg_plot_df['Private_cumulative'],
                         mode='lines+markers',
                         name='Private (누적)',
-                        line=dict(color='rgb(245, 130, 32)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(245, 130, 32)', width=2)
                     ))
                     fig_pvg.add_trace(go.Scatter(
                         x=pvg_plot_df['date'],
                         y=pvg_plot_df['Government_cumulative'],
                         mode='lines+markers',
                         name='Government (누적)',
-                        line=dict(color='rgb(4, 59, 114)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(4, 59, 114)', width=2)
                     ))
                     fig_pvg.update_layout(
                         xaxis_title="날짜",
-                        yaxis=dict(title="월간 변화량", side="left"),
-                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        yaxis_title="누적 변화량",
                         margin=dict(l=20, r=20, t=40, b=80),
                         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                         legend_title="항목"
@@ -1895,18 +1878,21 @@ with tab1:
                     y=pvg_plot_df['Private_share'],
                     mode='lines+markers',
                     name='Private 비중',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_pvg_share.add_trace(go.Scatter(
                     x=pvg_plot_df['date'],
                     y=pvg_plot_df['Government_share'],
                     mode='lines+markers',
                     name='Government 비중',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_pvg_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="Private 비중 (%)", side="left"),
+                    yaxis2=dict(title="Government 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -1965,40 +1951,23 @@ with tab1:
                         legend_title="항목"
                     )
                 else:
-                    fig_gvs.add_trace(go.Bar(
-                        x=gvs_plot_df['date'],
-                        y=gvs_plot_df['Goods_change'],
-                        name='Goods Producing (월간)',
-                        marker_color='rgb(245,130,32)',
-                        yaxis='y'
-                    ))
-                    fig_gvs.add_trace(go.Bar(
-                        x=gvs_plot_df['date'],
-                        y=gvs_plot_df['Service_change'],
-                        name='Service Providing (월간)',
-                        marker_color='rgb(4,59,114)',
-                        yaxis='y'
-                    ))
                     fig_gvs.add_trace(go.Scatter(
                         x=gvs_plot_df['date'],
                         y=gvs_plot_df['Goods_cumulative'],
                         mode='lines+markers',
                         name='Goods Producing (누적)',
-                        line=dict(color='rgb(245, 130, 32)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(245, 130, 32)', width=2)
                     ))
                     fig_gvs.add_trace(go.Scatter(
                         x=gvs_plot_df['date'],
                         y=gvs_plot_df['Service_cumulative'],
                         mode='lines+markers',
                         name='Service Providing (누적)',
-                        line=dict(color='rgb(4, 59, 114)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(4, 59, 114)', width=2)
                     ))
                     fig_gvs.update_layout(
                         xaxis_title="날짜",
-                        yaxis=dict(title="월간 변화량", side="left"),
-                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        yaxis_title="누적 변화량",
                         margin=dict(l=20, r=20, t=40, b=80),
                         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                         legend_title="항목"
@@ -2012,18 +1981,21 @@ with tab1:
                     y=gvs_plot_df['Goods_share'],
                     mode='lines+markers',
                     name='Goods Producing 비중',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_gvs_share.add_trace(go.Scatter(
                     x=gvs_plot_df['date'],
                     y=gvs_plot_df['Service_share'],
                     mode='lines+markers',
                     name='Service Providing 비중',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_gvs_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="Goods Producing 비중 (%)", side="left"),
+                    yaxis2=dict(title="Service Providing 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -2130,11 +2102,13 @@ with tab1:
 
         # 6. Government - Sub (Federal, State, Local)
         st.markdown("##### **6. Government - Sub**")
-        col_gov1, col_gov2 = st.columns(2)
+        col_gov1, col_gov2, col_gov3 = st.columns(3)
         with col_gov1:
             gov_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="gov_chart_start")
         with col_gov2:
             gov_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="gov_chart_end")
+        with col_gov3:
+            gov_view_type = st.selectbox("보기 유형", ["월간 변화량", "누적 변화량"], key="gov_view_type")
 
         gov_start_dt = pd.to_datetime(gov_start)
         gov_end_dt = pd.to_datetime(gov_end)
@@ -2142,7 +2116,7 @@ with tab1:
             gov_end_dt = gov_start_dt
 
         gov_mask = (raw_df['date'] >= gov_start_dt) & (raw_df['date'] <= gov_end_dt)
-        gov_plot_df = raw_df.loc[gov_mask, ['date', 'Federal (FG)', 'State (SG)', 'Local (LG)']].copy().sort_values('date')
+        gov_plot_df = raw_df.loc[gov_mask, ['date', 'Federal (FG)', 'State (SG)', 'Local (LG)', 'Government']].copy().sort_values('date')
 
         if len(gov_plot_df) > 1:
             gov_plot_df['Federal_change'] = gov_plot_df['Federal (FG)'].diff()
@@ -2156,66 +2130,69 @@ with tab1:
 
             with col_gov_chart1:
                 fig_gov = go.Figure()
-                fig_gov.add_trace(go.Bar(
-                    x=gov_plot_df['date'],
-                    y=gov_plot_df['Federal_change'],
-                    name='Federal (FG) (월간)',
-                    marker_color='rgb(245,130,32)',
-                    yaxis='y'
-                ))
-                fig_gov.add_trace(go.Bar(
-                    x=gov_plot_df['date'],
-                    y=gov_plot_df['State_change'],
-                    name='State (SG) (월간)',
-                    marker_color='rgb(4,59,114)',
-                    yaxis='y'
-                ))
-                fig_gov.add_trace(go.Bar(
-                    x=gov_plot_df['date'],
-                    y=gov_plot_df['Local_change'],
-                    name='Local (LG) (월간)',
-                    marker_color='rgb(0,169,206)',
-                    yaxis='y'
-                ))
-                fig_gov.add_trace(go.Scatter(
-                    x=gov_plot_df['date'],
-                    y=gov_plot_df['Federal_cumulative'],
-                    mode='lines+markers',
-                    name='Federal (FG) (누적)',
-                    line=dict(color='rgb(245, 130, 32)', width=2),
-                    yaxis='y2'
-                ))
-                fig_gov.add_trace(go.Scatter(
-                    x=gov_plot_df['date'],
-                    y=gov_plot_df['State_cumulative'],
-                    mode='lines+markers',
-                    name='State (SG) (누적)',
-                    line=dict(color='rgb(4, 59, 114)', width=2),
-                    yaxis='y2'
-                ))
-                fig_gov.add_trace(go.Scatter(
-                    x=gov_plot_df['date'],
-                    y=gov_plot_df['Local_cumulative'],
-                    mode='lines+markers',
-                    name='Local (LG) (누적)',
-                    line=dict(color='rgb(0, 169, 206)', width=2),
-                    yaxis='y2'
-                ))
-                fig_gov.update_layout(
-                    xaxis_title="날짜",
-                    yaxis=dict(title="월간 변화량", side="left"),
-                    yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
-                    margin=dict(l=20, r=20, t=40, b=80),
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
-                    legend_title="항목"
-                )
+                if gov_view_type == "월간 변화량":
+                    fig_gov.add_trace(go.Bar(
+                        x=gov_plot_df['date'],
+                        y=gov_plot_df['Federal_change'],
+                        name='Federal (FG) (월간)',
+                        marker_color='rgb(245,130,32)'
+                    ))
+                    fig_gov.add_trace(go.Bar(
+                        x=gov_plot_df['date'],
+                        y=gov_plot_df['State_change'],
+                        name='State (SG) (월간)',
+                        marker_color='rgb(4,59,114)'
+                    ))
+                    fig_gov.add_trace(go.Bar(
+                        x=gov_plot_df['date'],
+                        y=gov_plot_df['Local_change'],
+                        name='Local (LG) (월간)',
+                        marker_color='rgb(0,169,206)'
+                    ))
+                    y_title = "월간 변화량"
+                    fig_gov.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title=y_title,
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
+                else:
+                    fig_gov.add_trace(go.Scatter(
+                        x=gov_plot_df['date'],
+                        y=gov_plot_df['Federal_cumulative'],
+                        mode='lines+markers',
+                        name='Federal (FG) (누적)',
+                        line=dict(color='rgb(245, 130, 32)', width=2)
+                    ))
+                    fig_gov.add_trace(go.Scatter(
+                        x=gov_plot_df['date'],
+                        y=gov_plot_df['State_cumulative'],
+                        mode='lines+markers',
+                        name='State (SG) (누적)',
+                        line=dict(color='rgb(4, 59, 114)', width=2)
+                    ))
+                    fig_gov.add_trace(go.Scatter(
+                        x=gov_plot_df['date'],
+                        y=gov_plot_df['Local_cumulative'],
+                        mode='lines+markers',
+                        name='Local (LG) (누적)',
+                        line=dict(color='rgb(0, 169, 206)', width=2)
+                    ))
+                    fig_gov.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title="누적 변화량",
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 st.plotly_chart(fig_gov, use_container_width=True)
 
             with col_gov_chart2:
-                gov_nfp_df = raw_df.loc[gov_mask, ['date', 'Non Farm Payroll(sa)']].copy().sort_values('date')
-                gov_plot_df['Federal_share'] = (gov_plot_df['Federal (FG)'] / gov_nfp_df['Non Farm Payroll(sa)'].values) * 100
-                gov_plot_df['State_share'] = (gov_plot_df['State (SG)'] / gov_nfp_df['Non Farm Payroll(sa)'].values) * 100
-                gov_plot_df['Local_share'] = (gov_plot_df['Local (LG)'] / gov_nfp_df['Non Farm Payroll(sa)'].values) * 100
+                # Government 고용 중에서의 비중 계산
+                gov_plot_df['Federal_share'] = (gov_plot_df['Federal (FG)'] / gov_plot_df['Government'].values) * 100
+                gov_plot_df['State_share'] = (gov_plot_df['State (SG)'] / gov_plot_df['Government'].values) * 100
+                gov_plot_df['Local_share'] = (gov_plot_df['Local (LG)'] / gov_plot_df['Government'].values) * 100
                 
                 fig_gov_share = go.Figure()
                 fig_gov_share.add_trace(go.Scatter(
@@ -2223,25 +2200,29 @@ with tab1:
                     y=gov_plot_df['Federal_share'],
                     mode='lines+markers',
                     name='Federal (FG) 비중',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_gov_share.add_trace(go.Scatter(
                     x=gov_plot_df['date'],
                     y=gov_plot_df['State_share'],
                     mode='lines+markers',
                     name='State (SG) 비중',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y'
                 ))
                 fig_gov_share.add_trace(go.Scatter(
                     x=gov_plot_df['date'],
                     y=gov_plot_df['Local_share'],
                     mode='lines+markers',
                     name='Local (LG) 비중',
-                    line=dict(color='#489904', width=2)
+                    line=dict(color='#489904', width=2),
+                    yaxis='y2'
                 ))
                 fig_gov_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="Federal/State 비중 (%)", side="left"),
+                    yaxis2=dict(title="Local 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -2300,40 +2281,23 @@ with tab1:
                         legend_title="항목"
                     )
                 else:
-                    fig_fed.add_trace(go.Bar(
-                        x=fed_plot_df['date'],
-                        y=fed_plot_df['FD_change'],
-                        name='FD (월간)',
-                        marker_color='rgb(245,130,32)',
-                        yaxis='y'
-                    ))
-                    fig_fed.add_trace(go.Bar(
-                        x=fed_plot_df['date'],
-                        y=fed_plot_df['UP_change'],
-                        name='UP (월간)',
-                        marker_color='rgb(4,59,114)',
-                        yaxis='y'
-                    ))
                     fig_fed.add_trace(go.Scatter(
                         x=fed_plot_df['date'],
                         y=fed_plot_df['FD_cumulative'],
                         mode='lines+markers',
                         name='FD (누적)',
-                        line=dict(color='rgb(245, 130, 32)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(245, 130, 32)', width=2)
                     ))
                     fig_fed.add_trace(go.Scatter(
                         x=fed_plot_df['date'],
                         y=fed_plot_df['UP_cumulative'],
                         mode='lines+markers',
                         name='UP (누적)',
-                        line=dict(color='rgb(4, 59, 114)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(4, 59, 114)', width=2)
                     ))
                     fig_fed.update_layout(
                         xaxis_title="날짜",
-                        yaxis=dict(title="월간 변화량", side="left"),
-                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        yaxis_title="누적 변화량",
                         margin=dict(l=20, r=20, t=40, b=80),
                         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                         legend_title="항목"
@@ -2347,18 +2311,21 @@ with tab1:
                     y=fed_plot_df['FD_share'],
                     mode='lines+markers',
                     name='FD 비중',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_fed_share.add_trace(go.Scatter(
                     x=fed_plot_df['date'],
                     y=fed_plot_df['UP_share'],
                     mode='lines+markers',
                     name='UP 비중',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_fed_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="FD 비중 (%)", side="left"),
+                    yaxis2=dict(title="UP 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -2417,40 +2384,23 @@ with tab1:
                         legend_title="항목"
                     )
                 else:
-                    fig_st.add_trace(go.Bar(
-                        x=st_plot_df['date'],
-                        y=st_plot_df['SG_Edu_change'],
-                        name='SG: Education (월간)',
-                        marker_color='rgb(245,130,32)',
-                        yaxis='y'
-                    ))
-                    fig_st.add_trace(go.Bar(
-                        x=st_plot_df['date'],
-                        y=st_plot_df['SG_SE_change'],
-                        name='SG: excl Education (월간)',
-                        marker_color='rgb(4,59,114)',
-                        yaxis='y'
-                    ))
                     fig_st.add_trace(go.Scatter(
                         x=st_plot_df['date'],
                         y=st_plot_df['SG_Edu_cumulative'],
                         mode='lines+markers',
                         name='SG: Education (누적)',
-                        line=dict(color='rgb(245, 130, 32)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(245, 130, 32)', width=2)
                     ))
                     fig_st.add_trace(go.Scatter(
                         x=st_plot_df['date'],
                         y=st_plot_df['SG_SE_cumulative'],
                         mode='lines+markers',
                         name='SG: excl Education (누적)',
-                        line=dict(color='rgb(4, 59, 114)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(4, 59, 114)', width=2)
                     ))
                     fig_st.update_layout(
                         xaxis_title="날짜",
-                        yaxis=dict(title="월간 변화량", side="left"),
-                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        yaxis_title="누적 변화량",
                         margin=dict(l=20, r=20, t=40, b=80),
                         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                         legend_title="항목"
@@ -2464,18 +2414,21 @@ with tab1:
                     y=st_plot_df['SG_Edu_share'],
                     mode='lines+markers',
                     name='SG: Education 비중',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_st_share.add_trace(go.Scatter(
                     x=st_plot_df['date'],
                     y=st_plot_df['SG_SE_share'],
                     mode='lines+markers',
                     name='SG: excl Education 비중',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_st_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="SG: Education 비중 (%)", side="left"),
+                    yaxis2=dict(title="SG: excl Education 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
@@ -2534,40 +2487,23 @@ with tab1:
                         legend_title="항목"
                     )
                 else:
-                    fig_loc.add_trace(go.Bar(
-                        x=loc_plot_df['date'],
-                        y=loc_plot_df['LG_Edu_change'],
-                        name='LG: Education (월간)',
-                        marker_color='rgb(245,130,32)',
-                        yaxis='y'
-                    ))
-                    fig_loc.add_trace(go.Bar(
-                        x=loc_plot_df['date'],
-                        y=loc_plot_df['LG_LE_change'],
-                        name='LG: excl Education (월간)',
-                        marker_color='rgb(4,59,114)',
-                        yaxis='y'
-                    ))
                     fig_loc.add_trace(go.Scatter(
                         x=loc_plot_df['date'],
                         y=loc_plot_df['LG_Edu_cumulative'],
                         mode='lines+markers',
                         name='LG: Education (누적)',
-                        line=dict(color='rgb(245, 130, 32)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(245, 130, 32)', width=2)
                     ))
                     fig_loc.add_trace(go.Scatter(
                         x=loc_plot_df['date'],
                         y=loc_plot_df['LG_LE_cumulative'],
                         mode='lines+markers',
                         name='LG: excl Education (누적)',
-                        line=dict(color='rgb(4, 59, 114)', width=2),
-                        yaxis='y2'
+                        line=dict(color='rgb(4, 59, 114)', width=2)
                     ))
                     fig_loc.update_layout(
                         xaxis_title="날짜",
-                        yaxis=dict(title="월간 변화량", side="left"),
-                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        yaxis_title="누적 변화량",
                         margin=dict(l=20, r=20, t=40, b=80),
                         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                         legend_title="항목"
@@ -2581,18 +2517,21 @@ with tab1:
                     y=loc_plot_df['LG_Edu_share'],
                     mode='lines+markers',
                     name='LG: Education 비중',
-                    line=dict(color='#146aff', width=2)
+                    line=dict(color='#146aff', width=2),
+                    yaxis='y'
                 ))
                 fig_loc_share.add_trace(go.Scatter(
                     x=loc_plot_df['date'],
                     y=loc_plot_df['LG_LE_share'],
                     mode='lines+markers',
                     name='LG: excl Education 비중',
-                    line=dict(color='#f0580a', width=2)
+                    line=dict(color='#f0580a', width=2),
+                    yaxis='y2'
                 ))
                 fig_loc_share.update_layout(
                     xaxis_title="날짜",
-                    yaxis_title="비중 (%)",
+                    yaxis=dict(title="LG: Education 비중 (%)", side="left"),
+                    yaxis2=dict(title="LG: excl Education 비중 (%)", side="right", overlaying="y"),
                     margin=dict(l=20, r=20, t=40, b=80),
                     legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
