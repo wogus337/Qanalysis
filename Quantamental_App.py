@@ -689,8 +689,8 @@ def load_us_nfp_data():
 def load_us_cpi_data():
     """US CPI 데이터를 로드합니다."""
     codes_CPI = ['530032797', '530032887', '530032697', '530032787',  # CPI YOY, Core YOY, CPI MOM, Core MOM
-               '530032807', '530032817', '530032827', '530032837', '530032847', '530032857', '530032867', '530032877',
-               '530032777', '530032767', '530032757', '530032747', '530032737', '530032727', '530032717', '530032707']
+                 '530032807', '530032817', '530032827', '530032837', '530032847', '530032857', '530032867', '530032877',
+                 '530032777', '530032767', '530032757', '530032747', '530032737', '530032727', '530032717', '530032707']
 
     df_CPI = Ceic.series(codes_CPI, start_date='2025-01-01').as_pandas()
     meta_CPI = Ceic.series_metadata(codes_CPI).as_pandas()
@@ -712,13 +712,14 @@ def load_us_cpi_data():
     df_CPI_tr = df_pivot.sort_index()
     df_CPI_tr = df_CPI_tr.reset_index().rename(columns={'index': 'date'})
     df_CPI_tr = df_CPI_tr[['date',
-                       'CPI(YoY)', 'Core CPI(YoY)',
-                       'YoY: Apparel', 'YoY: Transport', 'YoY: Medical Care', 'YoY: Recreation',
-                       'YoY: Education & Communication', 'YoY: Other Goods & Services',
-                       'CPI(MoM)', 'Core CPI(MoM)',
-                       'MoM: Other Goods & Services', 'MoM: Education & Communication', 'MoM: Recreation',
-                       'MoM: Medical Care', 'MoM: Transport', 'MoM: Apparel', 'MoM: Housing', 'MoM: Food & Beverages'
-                       ]]
+                           'CPI(YoY)', 'Core CPI(YoY)',
+                           'YoY: Apparel', 'YoY: Transport', 'YoY: Medical Care', 'YoY: Recreation',
+                           'YoY: Education & Communication', 'YoY: Other Goods & Services',
+                           'CPI(MoM)', 'Core CPI(MoM)',
+                           'MoM: Other Goods & Services', 'MoM: Education & Communication', 'MoM: Recreation',
+                           'MoM: Medical Care', 'MoM: Transport', 'MoM: Apparel', 'MoM: Housing',
+                           'MoM: Food & Beverages'
+                           ]]
 
     df_oriCPI = pd.read_csv('ori_CPI.csv')
     df_oriCPI['date'] = pd.to_datetime(df_oriCPI['date'])
@@ -1094,7 +1095,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        #st.subheader("미국 ISM 제조업 PMI")
+        # st.subheader("미국 ISM 제조업 PMI")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1323,7 +1324,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        #st.subheader("미국 ISM 서비스업 PMI")
+        # st.subheader("미국 ISM 서비스업 PMI")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1628,7 +1629,7 @@ with tab1:
         transposed = pd.concat([transposed.iloc[:split_idx], insert_row, transposed.iloc[split_idx:]],
                                ignore_index=True)
 
-        #st.subheader("미국 비농업고용(sa)")
+        # st.subheader("미국 비농업고용(sa)")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -1741,7 +1742,8 @@ with tab1:
                 xaxis_title="날짜",
                 yaxis=dict(title="월간 변화량", side="left"),
                 yaxis2=dict(title="누적 증감", side="right", overlaying="y"),
-                margin=dict(l=20, r=20, t=40, b=40),
+                margin=dict(l=20, r=20, t=40, b=80),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                 legend_title="항목"
             )
             st.plotly_chart(fig_nfp, use_container_width=True)
@@ -1788,7 +1790,8 @@ with tab1:
                 barmode='group',
                 xaxis_title="날짜",
                 yaxis_title="변화량",
-                margin=dict(l=20, r=20, t=40, b=40),
+                margin=dict(l=20, r=20, t=40, b=80),
+                legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                 legend_title="항목"
             )
             st.plotly_chart(fig_rev, use_container_width=True)
@@ -1837,29 +1840,52 @@ with tab1:
                         marker_color='rgb(4,59,114)'
                     ))
                     y_title = "월간 변화량"
+                    fig_pvg.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title=y_title,
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 else:
+                    fig_pvg.add_trace(go.Bar(
+                        x=pvg_plot_df['date'],
+                        y=pvg_plot_df['Private_change'],
+                        name='Private (월간)',
+                        marker_color='rgb(245,130,32)',
+                        yaxis='y'
+                    ))
+                    fig_pvg.add_trace(go.Bar(
+                        x=pvg_plot_df['date'],
+                        y=pvg_plot_df['Government_change'],
+                        name='Government (월간)',
+                        marker_color='rgb(4,59,114)',
+                        yaxis='y'
+                    ))
                     fig_pvg.add_trace(go.Scatter(
                         x=pvg_plot_df['date'],
                         y=pvg_plot_df['Private_cumulative'],
                         mode='lines+markers',
                         name='Private (누적)',
-                        line=dict(color='#146aff', width=2)
+                        line=dict(color='#146aff', width=2),
+                        yaxis='y2'
                     ))
                     fig_pvg.add_trace(go.Scatter(
                         x=pvg_plot_df['date'],
                         y=pvg_plot_df['Government_cumulative'],
                         mode='lines+markers',
                         name='Government (누적)',
-                        line=dict(color='#f0580a', width=2)
+                        line=dict(color='#f0580a', width=2),
+                        yaxis='y2'
                     ))
-                    y_title = "누적 변화량"
-
-                fig_pvg.update_layout(
-                    xaxis_title="날짜",
-                    yaxis_title=y_title,
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend_title="항목"
-                )
+                    fig_pvg.update_layout(
+                        xaxis_title="날짜",
+                        yaxis=dict(title="월간 변화량", side="left"),
+                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 st.plotly_chart(fig_pvg, use_container_width=True)
 
             with col_pvg_chart2:
@@ -1881,7 +1907,8 @@ with tab1:
                 fig_pvg_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=40),
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_pvg_share, use_container_width=True)
@@ -1930,29 +1957,52 @@ with tab1:
                         marker_color='rgb(4,59,114)'
                     ))
                     y_title = "월간 변화량"
+                    fig_gvs.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title=y_title,
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 else:
+                    fig_gvs.add_trace(go.Bar(
+                        x=gvs_plot_df['date'],
+                        y=gvs_plot_df['Goods_change'],
+                        name='Goods Producing (월간)',
+                        marker_color='rgb(245,130,32)',
+                        yaxis='y'
+                    ))
+                    fig_gvs.add_trace(go.Bar(
+                        x=gvs_plot_df['date'],
+                        y=gvs_plot_df['Service_change'],
+                        name='Service Providing (월간)',
+                        marker_color='rgb(4,59,114)',
+                        yaxis='y'
+                    ))
                     fig_gvs.add_trace(go.Scatter(
                         x=gvs_plot_df['date'],
                         y=gvs_plot_df['Goods_cumulative'],
                         mode='lines+markers',
                         name='Goods Producing (누적)',
-                        line=dict(color='#146aff', width=2)
+                        line=dict(color='#146aff', width=2),
+                        yaxis='y2'
                     ))
                     fig_gvs.add_trace(go.Scatter(
                         x=gvs_plot_df['date'],
                         y=gvs_plot_df['Service_cumulative'],
                         mode='lines+markers',
                         name='Service Providing (누적)',
-                        line=dict(color='#f0580a', width=2)
+                        line=dict(color='#f0580a', width=2),
+                        yaxis='y2'
                     ))
-                    y_title = "누적 변화량"
-
-                fig_gvs.update_layout(
-                    xaxis_title="날짜",
-                    yaxis_title=y_title,
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend_title="항목"
-                )
+                    fig_gvs.update_layout(
+                        xaxis_title="날짜",
+                        yaxis=dict(title="월간 변화량", side="left"),
+                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 st.plotly_chart(fig_gvs, use_container_width=True)
 
             with col_gvs_chart2:
@@ -1974,7 +2024,8 @@ with tab1:
                 fig_gvs_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=40),
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_gvs_share, use_container_width=True)
@@ -2036,7 +2087,8 @@ with tab1:
                     xaxis_title="업종",
                     yaxis_title="최근 1개월 증감",
                     margin=dict(l=20, r=20, t=40, b=200),
-                    xaxis=dict(tickangle=-45)
+                    xaxis=dict(tickangle=-45),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
                 )
                 st.plotly_chart(fig_sec_latest, use_container_width=True)
 
@@ -2055,8 +2107,8 @@ with tab1:
                 fig_sec_cum.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="누적 증감",
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                    margin=dict(l=20, r=20, t=40, b=200),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
                 )
                 st.plotly_chart(fig_sec_cum, use_container_width=True)
 
@@ -2074,8 +2126,8 @@ with tab1:
                 fig_sec_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                    margin=dict(l=20, r=20, t=40, b=200),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
                 )
                 st.plotly_chart(fig_sec_share, use_container_width=True)
 
@@ -2126,29 +2178,52 @@ with tab1:
                         marker_color='rgb(4,59,114)'
                     ))
                     y_title = "월간 변화량"
+                    fig_fed.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title=y_title,
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 else:
+                    fig_fed.add_trace(go.Bar(
+                        x=fed_plot_df['date'],
+                        y=fed_plot_df['FD_change'],
+                        name='FD (월간)',
+                        marker_color='rgb(245,130,32)',
+                        yaxis='y'
+                    ))
+                    fig_fed.add_trace(go.Bar(
+                        x=fed_plot_df['date'],
+                        y=fed_plot_df['UP_change'],
+                        name='UP (월간)',
+                        marker_color='rgb(4,59,114)',
+                        yaxis='y'
+                    ))
                     fig_fed.add_trace(go.Scatter(
                         x=fed_plot_df['date'],
                         y=fed_plot_df['FD_cumulative'],
                         mode='lines+markers',
                         name='FD (누적)',
-                        line=dict(color='#146aff', width=2)
+                        line=dict(color='#146aff', width=2),
+                        yaxis='y2'
                     ))
                     fig_fed.add_trace(go.Scatter(
                         x=fed_plot_df['date'],
                         y=fed_plot_df['UP_cumulative'],
                         mode='lines+markers',
                         name='UP (누적)',
-                        line=dict(color='#f0580a', width=2)
+                        line=dict(color='#f0580a', width=2),
+                        yaxis='y2'
                     ))
-                    y_title = "누적 변화량"
-
-                fig_fed.update_layout(
-                    xaxis_title="날짜",
-                    yaxis_title=y_title,
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend_title="항목"
-                )
+                    fig_fed.update_layout(
+                        xaxis_title="날짜",
+                        yaxis=dict(title="월간 변화량", side="left"),
+                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 st.plotly_chart(fig_fed, use_container_width=True)
 
             with col_fed_chart2:
@@ -2170,7 +2245,8 @@ with tab1:
                 fig_fed_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=40),
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_fed_share, use_container_width=True)
@@ -2219,29 +2295,52 @@ with tab1:
                         marker_color='rgb(4,59,114)'
                     ))
                     y_title = "월간 변화량"
+                    fig_st.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title=y_title,
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 else:
+                    fig_st.add_trace(go.Bar(
+                        x=st_plot_df['date'],
+                        y=st_plot_df['SG_Edu_change'],
+                        name='SG: Education (월간)',
+                        marker_color='rgb(245,130,32)',
+                        yaxis='y'
+                    ))
+                    fig_st.add_trace(go.Bar(
+                        x=st_plot_df['date'],
+                        y=st_plot_df['SG_SE_change'],
+                        name='SG: excl Education (월간)',
+                        marker_color='rgb(4,59,114)',
+                        yaxis='y'
+                    ))
                     fig_st.add_trace(go.Scatter(
                         x=st_plot_df['date'],
                         y=st_plot_df['SG_Edu_cumulative'],
                         mode='lines+markers',
                         name='SG: Education (누적)',
-                        line=dict(color='#146aff', width=2)
+                        line=dict(color='#146aff', width=2),
+                        yaxis='y2'
                     ))
                     fig_st.add_trace(go.Scatter(
                         x=st_plot_df['date'],
                         y=st_plot_df['SG_SE_cumulative'],
                         mode='lines+markers',
                         name='SG: excl Education (누적)',
-                        line=dict(color='#f0580a', width=2)
+                        line=dict(color='#f0580a', width=2),
+                        yaxis='y2'
                     ))
-                    y_title = "누적 변화량"
-
-                fig_st.update_layout(
-                    xaxis_title="날짜",
-                    yaxis_title=y_title,
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend_title="항목"
-                )
+                    fig_st.update_layout(
+                        xaxis_title="날짜",
+                        yaxis=dict(title="월간 변화량", side="left"),
+                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 st.plotly_chart(fig_st, use_container_width=True)
 
             with col_st_chart2:
@@ -2263,7 +2362,8 @@ with tab1:
                 fig_st_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=40),
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_st_share, use_container_width=True)
@@ -2312,29 +2412,52 @@ with tab1:
                         marker_color='rgb(4,59,114)'
                     ))
                     y_title = "월간 변화량"
+                    fig_loc.update_layout(
+                        xaxis_title="날짜",
+                        yaxis_title=y_title,
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 else:
+                    fig_loc.add_trace(go.Bar(
+                        x=loc_plot_df['date'],
+                        y=loc_plot_df['LG_Edu_change'],
+                        name='LG: Education (월간)',
+                        marker_color='rgb(245,130,32)',
+                        yaxis='y'
+                    ))
+                    fig_loc.add_trace(go.Bar(
+                        x=loc_plot_df['date'],
+                        y=loc_plot_df['LG_LE_change'],
+                        name='LG: excl Education (월간)',
+                        marker_color='rgb(4,59,114)',
+                        yaxis='y'
+                    ))
                     fig_loc.add_trace(go.Scatter(
                         x=loc_plot_df['date'],
                         y=loc_plot_df['LG_Edu_cumulative'],
                         mode='lines+markers',
                         name='LG: Education (누적)',
-                        line=dict(color='#146aff', width=2)
+                        line=dict(color='#146aff', width=2),
+                        yaxis='y2'
                     ))
                     fig_loc.add_trace(go.Scatter(
                         x=loc_plot_df['date'],
                         y=loc_plot_df['LG_LE_cumulative'],
                         mode='lines+markers',
                         name='LG: excl Education (누적)',
-                        line=dict(color='#f0580a', width=2)
+                        line=dict(color='#f0580a', width=2),
+                        yaxis='y2'
                     ))
-                    y_title = "누적 변화량"
-
-                fig_loc.update_layout(
-                    xaxis_title="날짜",
-                    yaxis_title=y_title,
-                    margin=dict(l=20, r=20, t=40, b=40),
-                    legend_title="항목"
-                )
+                    fig_loc.update_layout(
+                        xaxis_title="날짜",
+                        yaxis=dict(title="월간 변화량", side="left"),
+                        yaxis2=dict(title="누적 변화량", side="right", overlaying="y"),
+                        margin=dict(l=20, r=20, t=40, b=80),
+                        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
+                        legend_title="항목"
+                    )
                 st.plotly_chart(fig_loc, use_container_width=True)
 
             with col_loc_chart2:
@@ -2356,11 +2479,11 @@ with tab1:
                 fig_loc_share.update_layout(
                     xaxis_title="날짜",
                     yaxis_title="비중 (%)",
-                    margin=dict(l=20, r=20, t=40, b=40),
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5),
                     legend_title="항목"
                 )
                 st.plotly_chart(fig_loc_share, use_container_width=True)
-
 
     with subtab4:
 
@@ -2392,7 +2515,7 @@ with tab1:
         df_for_disp = df_for_disp.reset_index(drop=True)
         df_for_disp_disp = df_for_disp.drop(columns=['date'])
 
-        original_columns = list(df_for_disp_disp.columns)        
+        original_columns = list(df_for_disp_disp.columns)
 
         transposed = df_for_disp_disp.T
         transposed.columns = [dt.strftime('%Y.%m') for dt in df_for_disp['date']]
@@ -2404,7 +2527,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        #st.subheader("미국 CPI(sa)")
+        # st.subheader("미국 CPI(sa)")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -2501,7 +2624,7 @@ with tab1:
         transposed['항목'] = pd.Categorical(transposed['항목'], categories=original_columns, ordered=True)
         transposed = transposed.sort_values('항목').reset_index(drop=True)
 
-        #st.subheader("미국 PPI(sa)")
+        # st.subheader("미국 PPI(sa)")
 
         gb = GridOptionsBuilder.from_dataframe(transposed)
         gb.configure_default_column(resizable=True, filter=True, sortable=True)
@@ -2587,9 +2710,9 @@ with tab2:
         today_str = today.strftime('%Y-%m-%d')
 
         case_count = len(selected_summary_df) if len(selected_summary_df) > 0 else 0
-        #st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
+        # st.subheader(f"(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)")
         st.markdown(f"#### **(1) 현재 모니터링 중인 '지표/경우의 수'에 대한 2015년 이후의 Trading 성과 ({case_count}개 경우의 수)**")
-        
+
         if len(selected_summary_df) > 0:
             display_df = selected_summary_df.copy()
             display_df = display_df.rename(columns={
@@ -2718,7 +2841,7 @@ with tab2:
 
         # 각 지표별 상태 표시
         st.markdown("---")
-        #st.subheader("(2) 지표별 현재 상태")
+        # st.subheader("(2) 지표별 현재 상태")
         st.markdown("#### **(2) 분석 경우별 최근 Signal**")
 
         indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
@@ -2895,7 +3018,7 @@ with tab2:
 
         # 차트 표시
         st.markdown("---")
-        #st.subheader("(3) 시계열 차트")
+        # st.subheader("(3) 시계열 차트")
         st.markdown("#### **(3) 시계열 차트**")
         st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
 
@@ -2985,11 +3108,3 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
-
-
-
-
-
-
-
-
