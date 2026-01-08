@@ -704,6 +704,9 @@ def load_us_cpi_data():
         .str.replace("CPI U: sa: ", "", regex=False)
     )
 
+    for col in df_CPI_tr.columns:
+        print(col)
+
     df_CPI['id'] = df_CPI['id'].astype(str)
     meta_CPI['id'] = meta_CPI['id'].astype(str)
     df_pivot = df_CPI.pivot(index='date', columns='id', values='value')
@@ -713,12 +716,13 @@ def load_us_cpi_data():
     df_CPI_tr = df_CPI_tr.reset_index().rename(columns={'index': 'date'})
     df_CPI_tr = df_CPI_tr[['date',
                            'CPI(YoY)', 'Core CPI(YoY)',
-                           'YoY: Apparel', 'YoY: Transport', 'YoY: Medical Care', 'YoY: Recreation',
-                           'YoY: Education & Communication', 'YoY: Other Goods & Services',
+                           'YoY: Food & Beverages', 'YoY: Housing', 'YoY: Apparel', 'YoY: Transport',
+                           'YoY: Medical Care', 'YoY: Recreation', 'YoY: Education & Communication',
+                           'YoY: Other Goods & Services',
                            'CPI(MoM)', 'Core CPI(MoM)',
-                           'MoM: Other Goods & Services', 'MoM: Education & Communication', 'MoM: Recreation',
-                           'MoM: Medical Care', 'MoM: Transport', 'MoM: Apparel', 'MoM: Housing',
-                           'MoM: Food & Beverages'
+                           'MoM: Food & Beverages', 'MoM: Housing', 'MoM: Apparel', 'MoM: Transport',
+                           'MoM: Medical Care', 'MoM: Recreation', 'MoM: Education & Communication',
+                           'MoM: Other Goods & Services',
                            ]]
 
     df_oriCPI = pd.read_csv('ori_CPI.csv')
@@ -2628,7 +2632,7 @@ with tab1:
         def get_row_style_js3():
             return JsCode("""
                     function(params) {
-                        if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 8 && params.node.rowIndex <= 9)) {
+                        if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 10 && params.node.rowIndex <= 11)) {
                             return {
                                 'backgroundColor': '#1565c0',
                                 'color': 'white',
@@ -2645,7 +2649,7 @@ with tab1:
 
         indent_js = JsCode("""
                 function(params) {
-                    if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 8 && params.node.rowIndex <= 9)) {
+                    if (params.node.rowIndex <= 1 || (params.node.rowIndex >= 10 && params.node.rowIndex <= 11)) {
                         return params.value;
                     } else {
                         return '\\u00A0\\u00A0' + params.value;
