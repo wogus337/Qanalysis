@@ -704,9 +704,6 @@ def load_us_cpi_data():
         .str.replace("CPI U: sa: ", "", regex=False)
     )
 
-    for col in df_CPI_tr.columns:
-        print(col)
-
     df_CPI['id'] = df_CPI['id'].astype(str)
     meta_CPI['id'] = meta_CPI['id'].astype(str)
     df_pivot = df_CPI.pivot(index='date', columns='id', values='value')
@@ -3201,3 +3198,4 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
