@@ -1687,10 +1687,680 @@ with tab1:
             theme="streamlit",
             allow_unsafe_jscode=True
         )
-        ##########################
-        # 여기부터 계속하기
-        ##########################
-        # PMI 보고 차트 코드 참고하기
+
+        # 차트 섹션 시작
+        st.markdown("---")
+        st.markdown("#### **Charts**")
+
+        # 날짜 범위 설정 (전역)
+        raw_df['date'] = pd.to_datetime(raw_df['date'])
+        min_date = raw_df['date'].min()
+        max_date = raw_df['date'].max()
+        default_start = pd.to_datetime("2023-01-01")
+        default_start = max(default_start, min_date)
+
+        # 1. Non Farm Payroll 차트
+        st.markdown("##### **1. Non Farm Payroll**")
+        col_nfp1, col_nfp2 = st.columns(2)
+        with col_nfp1:
+            nfp_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="nfp_chart_start")
+        with col_nfp2:
+            nfp_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="nfp_chart_end")
+
+        nfp_start_dt = pd.to_datetime(nfp_start)
+        nfp_end_dt = pd.to_datetime(nfp_end)
+        if nfp_start_dt > nfp_end_dt:
+            nfp_end_dt = nfp_start_dt
+
+        nfp_mask = (raw_df['date'] >= nfp_start_dt) & (raw_df['date'] <= nfp_end_dt)
+        nfp_plot_df = raw_df.loc[nfp_mask, ['date', 'Non Farm Payroll(sa)']].copy().sort_values('date')
+
+        if len(nfp_plot_df) > 1:
+            nfp_plot_df['monthly_change'] = nfp_plot_df['Non Farm Payroll(sa)'].diff()
+            nfp_plot_df['cumulative_change'] = nfp_plot_df['monthly_change'].cumsum()
+            nfp_plot_df['cumulative_change'] = nfp_plot_df['cumulative_change'].fillna(0)
+
+            fig_nfp = go.Figure()
+            fig_nfp.add_trace(go.Bar(
+                x=nfp_plot_df['date'],
+                y=nfp_plot_df['monthly_change'],
+                name='월간 변화량',
+                marker_color='rgb(245,130,32)',
+                yaxis='y'
+            ))
+            fig_nfp.add_trace(go.Scatter(
+                x=nfp_plot_df['date'],
+                y=nfp_plot_df['cumulative_change'],
+                mode='lines+markers',
+                name='누적 증감',
+                line=dict(color='#146aff', width=2),
+                yaxis='y2'
+            ))
+
+            fig_nfp.update_layout(
+                xaxis_title="날짜",
+                yaxis=dict(title="월간 변화량", side="left"),
+                yaxis2=dict(title="누적 증감", side="right", overlaying="y"),
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend_title="항목"
+            )
+            st.plotly_chart(fig_nfp, use_container_width=True)
+
+        # 2. Chg. 1st, 2nd, 3rd 차트
+        st.markdown("##### **2. 최근 3개월 Revise (Chg. 1st, 2nd, 3rd)**")
+        col_rev1, col_rev2 = st.columns(2)
+        with col_rev1:
+            rev_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="rev_chart_start")
+        with col_rev2:
+            rev_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="rev_chart_end")
+
+        rev_start_dt = pd.to_datetime(rev_start)
+        rev_end_dt = pd.to_datetime(rev_end)
+        if rev_start_dt > rev_end_dt:
+            rev_end_dt = rev_start_dt
+
+        rev_mask = (raw_df['date'] >= rev_start_dt) & (raw_df['date'] <= rev_end_dt)
+        rev_plot_df = raw_df.loc[rev_mask, ['date', 'Chg. 1st', 'Chg. 2nd', 'Chg. 3rd']].copy().sort_values('date')
+
+        if len(rev_plot_df) > 0:
+            fig_rev = go.Figure()
+            bar_colors = ["rgb(245,130,32)", "rgb(4,59,114)", "rgb(0,169,206)"]
+            fig_rev.add_trace(go.Bar(
+                x=rev_plot_df['date'],
+                y=rev_plot_df['Chg. 1st'],
+                name='Chg. 1st',
+                marker_color=bar_colors[0]
+            ))
+            fig_rev.add_trace(go.Bar(
+                x=rev_plot_df['date'],
+                y=rev_plot_df['Chg. 2nd'],
+                name='Chg. 2nd',
+                marker_color=bar_colors[1]
+            ))
+            fig_rev.add_trace(go.Bar(
+                x=rev_plot_df['date'],
+                y=rev_plot_df['Chg. 3rd'],
+                name='Chg. 3rd',
+                marker_color=bar_colors[2]
+            ))
+
+            fig_rev.update_layout(
+                barmode='group',
+                xaxis_title="날짜",
+                yaxis_title="변화량",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend_title="항목"
+            )
+            st.plotly_chart(fig_rev, use_container_width=True)
+
+        # 3. Private vs. Government 차트
+        st.markdown("##### **3. Private vs. Government**")
+        col_pvg1, col_pvg2, col_pvg3 = st.columns(3)
+        with col_pvg1:
+            pvg_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="pvg_chart_start")
+        with col_pvg2:
+            pvg_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="pvg_chart_end")
+        with col_pvg3:
+            pvg_view_type = st.selectbox("보기 유형", ["월간 변화량", "누적 변화량"], key="pvg_view_type")
+
+        pvg_start_dt = pd.to_datetime(pvg_start)
+        pvg_end_dt = pd.to_datetime(pvg_end)
+        if pvg_start_dt > pvg_end_dt:
+            pvg_end_dt = pvg_start_dt
+
+        pvg_mask = (raw_df['date'] >= pvg_start_dt) & (raw_df['date'] <= pvg_end_dt)
+        pvg_plot_df = raw_df.loc[pvg_mask, ['date', 'Private', 'Government', 'Non Farm Payroll(sa)']].copy().sort_values('date')
+
+        if len(pvg_plot_df) > 1:
+            pvg_plot_df['Private_change'] = pvg_plot_df['Private'].diff()
+            pvg_plot_df['Government_change'] = pvg_plot_df['Government'].diff()
+            pvg_plot_df['Private_cumulative'] = pvg_plot_df['Private_change'].cumsum().fillna(0)
+            pvg_plot_df['Government_cumulative'] = pvg_plot_df['Government_change'].cumsum().fillna(0)
+            pvg_plot_df['Private_share'] = (pvg_plot_df['Private'] / pvg_plot_df['Non Farm Payroll(sa)']) * 100
+            pvg_plot_df['Government_share'] = (pvg_plot_df['Government'] / pvg_plot_df['Non Farm Payroll(sa)']) * 100
+
+            col_pvg_chart1, col_pvg_chart2 = st.columns(2)
+
+            with col_pvg_chart1:
+                fig_pvg = go.Figure()
+                if pvg_view_type == "월간 변화량":
+                    fig_pvg.add_trace(go.Bar(
+                        x=pvg_plot_df['date'],
+                        y=pvg_plot_df['Private_change'],
+                        name='Private (월간)',
+                        marker_color='rgb(245,130,32)'
+                    ))
+                    fig_pvg.add_trace(go.Bar(
+                        x=pvg_plot_df['date'],
+                        y=pvg_plot_df['Government_change'],
+                        name='Government (월간)',
+                        marker_color='rgb(4,59,114)'
+                    ))
+                    y_title = "월간 변화량"
+                else:
+                    fig_pvg.add_trace(go.Scatter(
+                        x=pvg_plot_df['date'],
+                        y=pvg_plot_df['Private_cumulative'],
+                        mode='lines+markers',
+                        name='Private (누적)',
+                        line=dict(color='#146aff', width=2)
+                    ))
+                    fig_pvg.add_trace(go.Scatter(
+                        x=pvg_plot_df['date'],
+                        y=pvg_plot_df['Government_cumulative'],
+                        mode='lines+markers',
+                        name='Government (누적)',
+                        line=dict(color='#f0580a', width=2)
+                    ))
+                    y_title = "누적 변화량"
+
+                fig_pvg.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title=y_title,
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_pvg, use_container_width=True)
+
+            with col_pvg_chart2:
+                fig_pvg_share = go.Figure()
+                fig_pvg_share.add_trace(go.Scatter(
+                    x=pvg_plot_df['date'],
+                    y=pvg_plot_df['Private_share'],
+                    mode='lines+markers',
+                    name='Private 비중',
+                    line=dict(color='#146aff', width=2)
+                ))
+                fig_pvg_share.add_trace(go.Scatter(
+                    x=pvg_plot_df['date'],
+                    y=pvg_plot_df['Government_share'],
+                    mode='lines+markers',
+                    name='Government 비중',
+                    line=dict(color='#f0580a', width=2)
+                ))
+                fig_pvg_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_pvg_share, use_container_width=True)
+
+        # 4. Goods vs. Service 차트
+        st.markdown("##### **4. Goods vs. Service**")
+        col_gvs1, col_gvs2, col_gvs3 = st.columns(3)
+        with col_gvs1:
+            gvs_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="gvs_chart_start")
+        with col_gvs2:
+            gvs_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="gvs_chart_end")
+        with col_gvs3:
+            gvs_view_type = st.selectbox("보기 유형", ["월간 변화량", "누적 변화량"], key="gvs_view_type")
+
+        gvs_start_dt = pd.to_datetime(gvs_start)
+        gvs_end_dt = pd.to_datetime(gvs_end)
+        if gvs_start_dt > gvs_end_dt:
+            gvs_end_dt = gvs_start_dt
+
+        gvs_mask = (raw_df['date'] >= gvs_start_dt) & (raw_df['date'] <= gvs_end_dt)
+        gvs_plot_df = raw_df.loc[gvs_mask, ['date', 'Goods Producing', 'Service Providing', 'Non Farm Payroll(sa)']].copy().sort_values('date')
+
+        if len(gvs_plot_df) > 1:
+            gvs_plot_df['Goods_change'] = gvs_plot_df['Goods Producing'].diff()
+            gvs_plot_df['Service_change'] = gvs_plot_df['Service Providing'].diff()
+            gvs_plot_df['Goods_cumulative'] = gvs_plot_df['Goods_change'].cumsum().fillna(0)
+            gvs_plot_df['Service_cumulative'] = gvs_plot_df['Service_change'].cumsum().fillna(0)
+            gvs_plot_df['Goods_share'] = (gvs_plot_df['Goods Producing'] / gvs_plot_df['Non Farm Payroll(sa)']) * 100
+            gvs_plot_df['Service_share'] = (gvs_plot_df['Service Providing'] / gvs_plot_df['Non Farm Payroll(sa)']) * 100
+
+            col_gvs_chart1, col_gvs_chart2 = st.columns(2)
+
+            with col_gvs_chart1:
+                fig_gvs = go.Figure()
+                if gvs_view_type == "월간 변화량":
+                    fig_gvs.add_trace(go.Bar(
+                        x=gvs_plot_df['date'],
+                        y=gvs_plot_df['Goods_change'],
+                        name='Goods Producing (월간)',
+                        marker_color='rgb(245,130,32)'
+                    ))
+                    fig_gvs.add_trace(go.Bar(
+                        x=gvs_plot_df['date'],
+                        y=gvs_plot_df['Service_change'],
+                        name='Service Providing (월간)',
+                        marker_color='rgb(4,59,114)'
+                    ))
+                    y_title = "월간 변화량"
+                else:
+                    fig_gvs.add_trace(go.Scatter(
+                        x=gvs_plot_df['date'],
+                        y=gvs_plot_df['Goods_cumulative'],
+                        mode='lines+markers',
+                        name='Goods Producing (누적)',
+                        line=dict(color='#146aff', width=2)
+                    ))
+                    fig_gvs.add_trace(go.Scatter(
+                        x=gvs_plot_df['date'],
+                        y=gvs_plot_df['Service_cumulative'],
+                        mode='lines+markers',
+                        name='Service Providing (누적)',
+                        line=dict(color='#f0580a', width=2)
+                    ))
+                    y_title = "누적 변화량"
+
+                fig_gvs.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title=y_title,
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_gvs, use_container_width=True)
+
+            with col_gvs_chart2:
+                fig_gvs_share = go.Figure()
+                fig_gvs_share.add_trace(go.Scatter(
+                    x=gvs_plot_df['date'],
+                    y=gvs_plot_df['Goods_share'],
+                    mode='lines+markers',
+                    name='Goods Producing 비중',
+                    line=dict(color='#146aff', width=2)
+                ))
+                fig_gvs_share.add_trace(go.Scatter(
+                    x=gvs_plot_df['date'],
+                    y=gvs_plot_df['Service_share'],
+                    mode='lines+markers',
+                    name='Service Providing 비중',
+                    line=dict(color='#f0580a', width=2)
+                ))
+                fig_gvs_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_gvs_share, use_container_width=True)
+
+        # 5. 업종별 차트
+        st.markdown("##### **5. 업종별**")
+        col_sec1, col_sec2 = st.columns(2)
+        with col_sec1:
+            sec_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="sec_chart_start")
+        with col_sec2:
+            sec_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="sec_chart_end")
+
+        sec_start_dt = pd.to_datetime(sec_start)
+        sec_end_dt = pd.to_datetime(sec_end)
+        if sec_start_dt > sec_end_dt:
+            sec_end_dt = sec_start_dt
+
+        sector_cols = ['Natural Resources & Mining (NR)', 'Construction (CO)', 'Manufacturing',
+                      'TU: Wholesale Trade (WT)', 'TU: Retail Trade (RT)',
+                      'TU: Transportation & Warehousing (TW)', 'TU: Utilities (UT)', 'INFormation (IF)',
+                      'Financial Activities (FA)', 'Professional & Business Services (PB)',
+                      'EH: Private Educational (ES)', 'EH: Health Care & Social Assistance (HS)',
+                      'Leisure & Hospitality (LH)', 'Other Services (OS)']
+
+        sec_mask = (raw_df['date'] >= sec_start_dt) & (raw_df['date'] <= sec_end_dt)
+        sec_plot_df = raw_df.loc[sec_mask, ['date', 'Non Farm Payroll(sa)'] + sector_cols].copy().sort_values('date')
+
+        if len(sec_plot_df) > 0:
+            # 최근 1개 증감 막대 그래프
+            latest_row = sec_plot_df.iloc[-1]
+            prev_row = sec_plot_df.iloc[-2] if len(sec_plot_df) > 1 else sec_plot_df.iloc[-1]
+            latest_changes = {}
+            for col in sector_cols:
+                if col in latest_row and col in prev_row:
+                    latest_changes[col] = latest_row[col] - prev_row[col]
+
+            # 누적 증감 계산
+            sec_plot_df_sorted = sec_plot_df.sort_values('date')
+            for col in sector_cols:
+                if col in sec_plot_df_sorted.columns:
+                    sec_plot_df_sorted[f'{col}_change'] = sec_plot_df_sorted[col].diff()
+                    sec_plot_df_sorted[f'{col}_cumulative'] = sec_plot_df_sorted[f'{col}_change'].cumsum().fillna(0)
+                    sec_plot_df_sorted[f'{col}_share'] = (sec_plot_df_sorted[col] / sec_plot_df_sorted['Non Farm Payroll(sa)']) * 100
+
+            col_sec_chart1, col_sec_chart2, col_sec_chart3 = st.columns(3)
+
+            with col_sec_chart1:
+                fig_sec_latest = go.Figure()
+                sorted_sectors = sorted(latest_changes.items(), key=lambda x: x[1], reverse=True)
+                sector_names = [s[0] for s in sorted_sectors]
+                sector_values = [s[1] for s in sorted_sectors]
+                colors = ['rgb(245,130,32)' if v >= 0 else 'rgb(4,59,114)' for v in sector_values]
+                fig_sec_latest.add_trace(go.Bar(
+                    x=sector_names,
+                    y=sector_values,
+                    marker_color=colors
+                ))
+                fig_sec_latest.update_layout(
+                    xaxis_title="업종",
+                    yaxis_title="최근 1개월 증감",
+                    margin=dict(l=20, r=20, t=40, b=200),
+                    xaxis=dict(tickangle=-45)
+                )
+                st.plotly_chart(fig_sec_latest, use_container_width=True)
+
+            with col_sec_chart2:
+                fig_sec_cum = go.Figure()
+                line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+                for i, col in enumerate(sector_cols):
+                    if f'{col}_cumulative' in sec_plot_df_sorted.columns:
+                        fig_sec_cum.add_trace(go.Scatter(
+                            x=sec_plot_df_sorted['date'],
+                            y=sec_plot_df_sorted[f'{col}_cumulative'],
+                            mode='lines',
+                            name=col,
+                            line=dict(color=line_colors[i % len(line_colors)], width=1.5)
+                        ))
+                fig_sec_cum.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="누적 증감",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                )
+                st.plotly_chart(fig_sec_cum, use_container_width=True)
+
+            with col_sec_chart3:
+                fig_sec_share = go.Figure()
+                for i, col in enumerate(sector_cols):
+                    if f'{col}_share' in sec_plot_df_sorted.columns:
+                        fig_sec_share.add_trace(go.Scatter(
+                            x=sec_plot_df_sorted['date'],
+                            y=sec_plot_df_sorted[f'{col}_share'],
+                            mode='lines',
+                            name=col,
+                            line=dict(color=line_colors[i % len(line_colors)], width=1.5)
+                        ))
+                fig_sec_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                )
+                st.plotly_chart(fig_sec_share, use_container_width=True)
+
+        # 6. Federal-sub, State-sub, Local-sub 차트
+        st.markdown("##### **6. Government - Sub**")
+
+        # Federal-sub
+        st.markdown("**Federal - Sub**")
+        col_fed1, col_fed2, col_fed3 = st.columns(3)
+        with col_fed1:
+            fed_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="fed_chart_start")
+        with col_fed2:
+            fed_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="fed_chart_end")
+        with col_fed3:
+            fed_view_type = st.selectbox("보기 유형", ["월간 변화량", "누적 변화량"], key="fed_view_type")
+
+        fed_start_dt = pd.to_datetime(fed_start)
+        fed_end_dt = pd.to_datetime(fed_end)
+        if fed_start_dt > fed_end_dt:
+            fed_end_dt = fed_start_dt
+
+        fed_mask = (raw_df['date'] >= fed_start_dt) & (raw_df['date'] <= fed_end_dt)
+        fed_plot_df = raw_df.loc[fed_mask, ['date', 'FG: excl US Postal Service (FD)', 'FG: US Postal Service (UP)', 'Federal (FG)']].copy().sort_values('date')
+
+        if len(fed_plot_df) > 1:
+            fed_plot_df['FD_change'] = fed_plot_df['FG: excl US Postal Service (FD)'].diff()
+            fed_plot_df['UP_change'] = fed_plot_df['FG: US Postal Service (UP)'].diff()
+            fed_plot_df['FD_cumulative'] = fed_plot_df['FD_change'].cumsum().fillna(0)
+            fed_plot_df['UP_cumulative'] = fed_plot_df['UP_change'].cumsum().fillna(0)
+            fed_plot_df['FD_share'] = (fed_plot_df['FG: excl US Postal Service (FD)'] / fed_plot_df['Federal (FG)']) * 100
+            fed_plot_df['UP_share'] = (fed_plot_df['FG: US Postal Service (UP)'] / fed_plot_df['Federal (FG)']) * 100
+
+            col_fed_chart1, col_fed_chart2 = st.columns(2)
+
+            with col_fed_chart1:
+                fig_fed = go.Figure()
+                if fed_view_type == "월간 변화량":
+                    fig_fed.add_trace(go.Bar(
+                        x=fed_plot_df['date'],
+                        y=fed_plot_df['FD_change'],
+                        name='FD (월간)',
+                        marker_color='rgb(245,130,32)'
+                    ))
+                    fig_fed.add_trace(go.Bar(
+                        x=fed_plot_df['date'],
+                        y=fed_plot_df['UP_change'],
+                        name='UP (월간)',
+                        marker_color='rgb(4,59,114)'
+                    ))
+                    y_title = "월간 변화량"
+                else:
+                    fig_fed.add_trace(go.Scatter(
+                        x=fed_plot_df['date'],
+                        y=fed_plot_df['FD_cumulative'],
+                        mode='lines+markers',
+                        name='FD (누적)',
+                        line=dict(color='#146aff', width=2)
+                    ))
+                    fig_fed.add_trace(go.Scatter(
+                        x=fed_plot_df['date'],
+                        y=fed_plot_df['UP_cumulative'],
+                        mode='lines+markers',
+                        name='UP (누적)',
+                        line=dict(color='#f0580a', width=2)
+                    ))
+                    y_title = "누적 변화량"
+
+                fig_fed.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title=y_title,
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_fed, use_container_width=True)
+
+            with col_fed_chart2:
+                fig_fed_share = go.Figure()
+                fig_fed_share.add_trace(go.Scatter(
+                    x=fed_plot_df['date'],
+                    y=fed_plot_df['FD_share'],
+                    mode='lines+markers',
+                    name='FD 비중',
+                    line=dict(color='#146aff', width=2)
+                ))
+                fig_fed_share.add_trace(go.Scatter(
+                    x=fed_plot_df['date'],
+                    y=fed_plot_df['UP_share'],
+                    mode='lines+markers',
+                    name='UP 비중',
+                    line=dict(color='#f0580a', width=2)
+                ))
+                fig_fed_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_fed_share, use_container_width=True)
+
+        # State-sub
+        st.markdown("**State - Sub**")
+        col_st1, col_st2, col_st3 = st.columns(3)
+        with col_st1:
+            st_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="st_chart_start")
+        with col_st2:
+            st_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="st_chart_end")
+        with col_st3:
+            st_view_type = st.selectbox("보기 유형", ["월간 변화량", "누적 변화량"], key="st_view_type")
+
+        st_start_dt = pd.to_datetime(st_start)
+        st_end_dt = pd.to_datetime(st_end)
+        if st_start_dt > st_end_dt:
+            st_end_dt = st_start_dt
+
+        st_mask = (raw_df['date'] >= st_start_dt) & (raw_df['date'] <= st_end_dt)
+        st_plot_df = raw_df.loc[st_mask, ['date', 'SG: Education', 'SG: excl Education (SE)', 'State (SG)']].copy().sort_values('date')
+
+        if len(st_plot_df) > 1:
+            st_plot_df['SG_Edu_change'] = st_plot_df['SG: Education'].diff()
+            st_plot_df['SG_SE_change'] = st_plot_df['SG: excl Education (SE)'].diff()
+            st_plot_df['SG_Edu_cumulative'] = st_plot_df['SG_Edu_change'].cumsum().fillna(0)
+            st_plot_df['SG_SE_cumulative'] = st_plot_df['SG_SE_change'].cumsum().fillna(0)
+            st_plot_df['SG_Edu_share'] = (st_plot_df['SG: Education'] / st_plot_df['State (SG)']) * 100
+            st_plot_df['SG_SE_share'] = (st_plot_df['SG: excl Education (SE)'] / st_plot_df['State (SG)']) * 100
+
+            col_st_chart1, col_st_chart2 = st.columns(2)
+
+            with col_st_chart1:
+                fig_st = go.Figure()
+                if st_view_type == "월간 변화량":
+                    fig_st.add_trace(go.Bar(
+                        x=st_plot_df['date'],
+                        y=st_plot_df['SG_Edu_change'],
+                        name='SG: Education (월간)',
+                        marker_color='rgb(245,130,32)'
+                    ))
+                    fig_st.add_trace(go.Bar(
+                        x=st_plot_df['date'],
+                        y=st_plot_df['SG_SE_change'],
+                        name='SG: excl Education (월간)',
+                        marker_color='rgb(4,59,114)'
+                    ))
+                    y_title = "월간 변화량"
+                else:
+                    fig_st.add_trace(go.Scatter(
+                        x=st_plot_df['date'],
+                        y=st_plot_df['SG_Edu_cumulative'],
+                        mode='lines+markers',
+                        name='SG: Education (누적)',
+                        line=dict(color='#146aff', width=2)
+                    ))
+                    fig_st.add_trace(go.Scatter(
+                        x=st_plot_df['date'],
+                        y=st_plot_df['SG_SE_cumulative'],
+                        mode='lines+markers',
+                        name='SG: excl Education (누적)',
+                        line=dict(color='#f0580a', width=2)
+                    ))
+                    y_title = "누적 변화량"
+
+                fig_st.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title=y_title,
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_st, use_container_width=True)
+
+            with col_st_chart2:
+                fig_st_share = go.Figure()
+                fig_st_share.add_trace(go.Scatter(
+                    x=st_plot_df['date'],
+                    y=st_plot_df['SG_Edu_share'],
+                    mode='lines+markers',
+                    name='SG: Education 비중',
+                    line=dict(color='#146aff', width=2)
+                ))
+                fig_st_share.add_trace(go.Scatter(
+                    x=st_plot_df['date'],
+                    y=st_plot_df['SG_SE_share'],
+                    mode='lines+markers',
+                    name='SG: excl Education 비중',
+                    line=dict(color='#f0580a', width=2)
+                ))
+                fig_st_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_st_share, use_container_width=True)
+
+        # Local-sub
+        st.markdown("**Local - Sub**")
+        col_loc1, col_loc2, col_loc3 = st.columns(3)
+        with col_loc1:
+            loc_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="loc_chart_start")
+        with col_loc2:
+            loc_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="loc_chart_end")
+        with col_loc3:
+            loc_view_type = st.selectbox("보기 유형", ["월간 변화량", "누적 변화량"], key="loc_view_type")
+
+        loc_start_dt = pd.to_datetime(loc_start)
+        loc_end_dt = pd.to_datetime(loc_end)
+        if loc_start_dt > loc_end_dt:
+            loc_end_dt = loc_start_dt
+
+        loc_mask = (raw_df['date'] >= loc_start_dt) & (raw_df['date'] <= loc_end_dt)
+        loc_plot_df = raw_df.loc[loc_mask, ['date', 'LG: Education', 'LG: excl Education (LE)', 'Local (LG)']].copy().sort_values('date')
+
+        if len(loc_plot_df) > 1:
+            loc_plot_df['LG_Edu_change'] = loc_plot_df['LG: Education'].diff()
+            loc_plot_df['LG_LE_change'] = loc_plot_df['LG: excl Education (LE)'].diff()
+            loc_plot_df['LG_Edu_cumulative'] = loc_plot_df['LG_Edu_change'].cumsum().fillna(0)
+            loc_plot_df['LG_LE_cumulative'] = loc_plot_df['LG_LE_change'].cumsum().fillna(0)
+            loc_plot_df['LG_Edu_share'] = (loc_plot_df['LG: Education'] / loc_plot_df['Local (LG)']) * 100
+            loc_plot_df['LG_LE_share'] = (loc_plot_df['LG: excl Education (LE)'] / loc_plot_df['Local (LG)']) * 100
+
+            col_loc_chart1, col_loc_chart2 = st.columns(2)
+
+            with col_loc_chart1:
+                fig_loc = go.Figure()
+                if loc_view_type == "월간 변화량":
+                    fig_loc.add_trace(go.Bar(
+                        x=loc_plot_df['date'],
+                        y=loc_plot_df['LG_Edu_change'],
+                        name='LG: Education (월간)',
+                        marker_color='rgb(245,130,32)'
+                    ))
+                    fig_loc.add_trace(go.Bar(
+                        x=loc_plot_df['date'],
+                        y=loc_plot_df['LG_LE_change'],
+                        name='LG: excl Education (월간)',
+                        marker_color='rgb(4,59,114)'
+                    ))
+                    y_title = "월간 변화량"
+                else:
+                    fig_loc.add_trace(go.Scatter(
+                        x=loc_plot_df['date'],
+                        y=loc_plot_df['LG_Edu_cumulative'],
+                        mode='lines+markers',
+                        name='LG: Education (누적)',
+                        line=dict(color='#146aff', width=2)
+                    ))
+                    fig_loc.add_trace(go.Scatter(
+                        x=loc_plot_df['date'],
+                        y=loc_plot_df['LG_LE_cumulative'],
+                        mode='lines+markers',
+                        name='LG: excl Education (누적)',
+                        line=dict(color='#f0580a', width=2)
+                    ))
+                    y_title = "누적 변화량"
+
+                fig_loc.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title=y_title,
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_loc, use_container_width=True)
+
+            with col_loc_chart2:
+                fig_loc_share = go.Figure()
+                fig_loc_share.add_trace(go.Scatter(
+                    x=loc_plot_df['date'],
+                    y=loc_plot_df['LG_Edu_share'],
+                    mode='lines+markers',
+                    name='LG: Education 비중',
+                    line=dict(color='#146aff', width=2)
+                ))
+                fig_loc_share.add_trace(go.Scatter(
+                    x=loc_plot_df['date'],
+                    y=loc_plot_df['LG_LE_share'],
+                    mode='lines+markers',
+                    name='LG: excl Education 비중',
+                    line=dict(color='#f0580a', width=2)
+                ))
+                fig_loc_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend_title="항목"
+                )
+                st.plotly_chart(fig_loc_share, use_container_width=True)
+
 
     with subtab4:
 
@@ -2315,6 +2985,7 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
 
