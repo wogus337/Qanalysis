@@ -2004,11 +2004,13 @@ with tab1:
 
         # 5. 업종별 차트
         st.markdown("##### **5. 업종별**")
-        col_sec1, col_sec2 = st.columns(2)
+        col_sec1, col_sec2, col_sec3 = st.columns(3)
         with col_sec1:
             sec_start = st.date_input("시작일", value=default_start.date(), min_value=min_date.date(), max_value=max_date.date(), key="sec_chart_start")
         with col_sec2:
             sec_end = st.date_input("종료일", value=max_date.date(), min_value=min_date.date(), max_value=max_date.date(), key="sec_chart_end")
+        with col_sec3:
+            sec_months = st.number_input("증감 기간 (개월)", min_value=1, max_value=24, value=1, step=1, key="sec_months")
 
         sec_start_dt = pd.to_datetime(sec_start)
         sec_end_dt = pd.to_datetime(sec_end)
@@ -2026,10 +2028,17 @@ with tab1:
         sec_plot_df = raw_df.loc[sec_mask, ['date', 'Non Farm Payroll(sa)'] + sector_cols].copy().sort_values('date')
 
         if len(sec_plot_df) > 0:
-            # 최근 1개 증감 막대 그래프
+            # X개월 증감 막대 그래프
             latest_row = sec_plot_df.iloc[-1]
-            prev_row = sec_plot_df.iloc[-2] if len(sec_plot_df) > 1 else sec_plot_df.iloc[-1]
             latest_changes = {}
+            
+            # X개월 전 데이터 찾기
+            if len(sec_plot_df) >= sec_months:
+                prev_idx = len(sec_plot_df) - 1 - sec_months
+                prev_row = sec_plot_df.iloc[prev_idx]
+            else:
+                prev_row = sec_plot_df.iloc[0] if len(sec_plot_df) > 0 else latest_row
+            
             for col in sector_cols:
                 if col in latest_row and col in prev_row:
                     latest_changes[col] = latest_row[col] - prev_row[col]
@@ -2042,19 +2051,20 @@ with tab1:
                     sec_plot_df_sorted[f'{col}_cumulative'] = sec_plot_df_sorted[f'{col}_change'].cumsum().fillna(0)
                     sec_plot_df_sorted[f'{col}_share'] = (sec_plot_df_sorted[col] / sec_plot_df_sorted['Non Farm Payroll(sa)']) * 100
 
-            # 최근 1개 증감 막대 그래프 (이중축: 증감 막대 + 비중 점)
+            # X개월 증감 막대 그래프 (이중축: 증감 막대 + 비중 점)
             fig_sec_latest = go.Figure()
             sorted_sectors = sorted(latest_changes.items(), key=lambda x: x[1], reverse=True)
             sector_names = [s[0] for s in sorted_sectors]
             sector_values = [s[1] for s in sorted_sectors]
             colors = ['rgb(245,130,32)' if v >= 0 else 'rgb(4,59,114)' for v in sector_values]
             
-            # 최근 1개월 증감 막대
+            # X개월 증감 막대
+            months_label = f"{sec_months}개월" if sec_months > 1 else "1개월"
             fig_sec_latest.add_trace(go.Bar(
                 x=sector_names,
                 y=sector_values,
                 marker_color=colors,
-                name='최근 1개월 증감',
+                name=f'최근 {months_label} 증감',
                 yaxis='y'
             ))
             
@@ -2079,7 +2089,7 @@ with tab1:
             
             fig_sec_latest.update_layout(
                 xaxis_title="업종",
-                yaxis=dict(title="최근 1개월 증감", side="left"),
+                yaxis=dict(title=f"최근 {months_label} 증감", side="left"),
                 yaxis2=dict(title="비중 (%)", side="right", overlaying="y"),
                 margin=dict(l=20, r=20, t=60, b=200),
                 xaxis=dict(tickangle=-45),
