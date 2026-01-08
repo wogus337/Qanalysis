@@ -1879,7 +1879,7 @@ with tab1:
                     y=pvg_plot_df['Private_share'],
                     mode='lines+markers',
                     name='Private 비중',
-                    line=dict(color='#146aff', width=2),
+                    line=dict(color='rgb(245,130,32)', width=2),
                     yaxis='y'
                 ))
                 fig_pvg_share.add_trace(go.Scatter(
@@ -1887,7 +1887,7 @@ with tab1:
                     y=pvg_plot_df['Government_share'],
                     mode='lines+markers',
                     name='Government 비중',
-                    line=dict(color='#f0580a', width=2),
+                    line=dict(color='rgb(4,59,114)', width=2),
                     yaxis='y2'
                 ))
                 fig_pvg_share.update_layout(
@@ -1982,7 +1982,7 @@ with tab1:
                     y=gvs_plot_df['Goods_share'],
                     mode='lines+markers',
                     name='Goods Producing 비중',
-                    line=dict(color='#146aff', width=2),
+                    line=dict(color='rgb(245,130,32)', width=2),
                     yaxis='y'
                 ))
                 fig_gvs_share.add_trace(go.Scatter(
@@ -1990,7 +1990,7 @@ with tab1:
                     y=gvs_plot_df['Service_share'],
                     mode='lines+markers',
                     name='Service Providing 비중',
-                    line=dict(color='#f0580a', width=2),
+                    line=dict(color='rgb(4,59,114)', width=2),
                     yaxis='y2'
                 ))
                 fig_gvs_share.update_layout(
@@ -2120,6 +2120,7 @@ with tab1:
 
             # 비중 라인 차트
             fig_sec_share = go.Figure()
+            share_colors = ['rgb(245,130,32)', 'rgb(4,59,114)', 'rgb(0,169,206)']
             for i, col in enumerate(sector_cols):
                 if f'{col}_share' in sec_plot_df_sorted.columns:
                     fig_sec_share.add_trace(go.Scatter(
@@ -2127,7 +2128,7 @@ with tab1:
                         y=sec_plot_df_sorted[f'{col}_share'],
                         mode='lines',
                         name=col,
-                        line=dict(color=line_colors[i % len(line_colors)], width=1.5)
+                        line=dict(color=share_colors[i % len(share_colors)], width=1.5)
                     ))
             fig_sec_share.update_layout(
                 xaxis_title="날짜",
@@ -2237,7 +2238,7 @@ with tab1:
                     y=gov_plot_df['Federal_share'],
                     mode='lines+markers',
                     name='Federal (FG) 비중',
-                    line=dict(color='#146aff', width=2),
+                    line=dict(color='rgb(245,130,32)', width=2),
                     yaxis='y'
                 ))
                 fig_gov_share.add_trace(go.Scatter(
@@ -2245,7 +2246,7 @@ with tab1:
                     y=gov_plot_df['State_share'],
                     mode='lines+markers',
                     name='State (SG) 비중',
-                    line=dict(color='#f0580a', width=2),
+                    line=dict(color='rgb(4,59,114)', width=2),
                     yaxis='y'
                 ))
                 fig_gov_share.add_trace(go.Scatter(
@@ -2253,7 +2254,7 @@ with tab1:
                     y=gov_plot_df['Local_share'],
                     mode='lines+markers',
                     name='Local (LG) 비중',
-                    line=dict(color='#489904', width=2),
+                    line=dict(color='rgb(0,169,206)', width=2),
                     yaxis='y2'
                 ))
                 fig_gov_share.update_layout(
@@ -2348,7 +2349,7 @@ with tab1:
                     y=fed_plot_df['FD_share'],
                     mode='lines+markers',
                     name='FG: excl US Postal Service (FD) 비중',
-                    line=dict(color='#146aff', width=2),
+                    line=dict(color='rgb(245,130,32)', width=2),
                     yaxis='y'
                 ))
                 fig_fed_share.add_trace(go.Scatter(
@@ -2356,7 +2357,7 @@ with tab1:
                     y=fed_plot_df['UP_share'],
                     mode='lines+markers',
                     name='FG: US Postal Service (UP) 비중',
-                    line=dict(color='#f0580a', width=2),
+                    line=dict(color='rgb(4,59,114)', width=2),
                     yaxis='y2'
                 ))
                 fig_fed_share.update_layout(
@@ -2451,7 +2452,7 @@ with tab1:
                     y=st_plot_df['SG_Edu_share'],
                     mode='lines+markers',
                     name='SG: Education 비중',
-                    line=dict(color='#146aff', width=2),
+                    line=dict(color='rgb(245,130,32)', width=2),
                     yaxis='y'
                 ))
                 fig_st_share.add_trace(go.Scatter(
@@ -2459,7 +2460,7 @@ with tab1:
                     y=st_plot_df['SG_SE_share'],
                     mode='lines+markers',
                     name='SG: excl Education 비중',
-                    line=dict(color='#f0580a', width=2),
+                    line=dict(color='rgb(4,59,114)', width=2),
                     yaxis='y2'
                 ))
                 fig_st_share.update_layout(
@@ -2554,7 +2555,7 @@ with tab1:
                     y=loc_plot_df['LG_Edu_share'],
                     mode='lines+markers',
                     name='LG: Education 비중',
-                    line=dict(color='#146aff', width=2),
+                    line=dict(color='rgb(245,130,32)', width=2),
                     yaxis='y'
                 ))
                 fig_loc_share.add_trace(go.Scatter(
@@ -2562,7 +2563,7 @@ with tab1:
                     y=loc_plot_df['LG_LE_share'],
                     mode='lines+markers',
                     name='LG: excl Education 비중',
-                    line=dict(color='#f0580a', width=2),
+                    line=dict(color='rgb(4,59,114)', width=2),
                     yaxis='y2'
                 ))
                 fig_loc_share.update_layout(
@@ -2929,16 +2930,18 @@ with tab2:
         else:
             st.info("분석 결과가 없습니다.")
 
-        # 각 지표별 상태 표시
+        # 각 지표별 상태 표시 및 차트
         st.markdown("---")
-        # st.subheader("(2) 지표별 현재 상태")
-        st.markdown("#### **(2) 분석 경우별 최근 Signal**")
+        st.markdown("#### **(2) 지표별 Signal 현황**")
+        st.text("차트에서 남색은 상승 신호 / 하늘색은 하락 신호입니다.")
 
         indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
                            'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
 
         indicator_status = {}
+        indicator_groups = {}
 
+        # Signal 현황 수집
         for cfg_key, trades_df in selected_detail_results.items():
             if len(trades_df) == 0:
                 continue
@@ -3002,9 +3005,22 @@ with tab2:
             if latest_signal_for_case is not None:
                 indicator_status[col]['cases'].append(latest_signal_for_case)
 
-        sorted_indicators = sorted(indicator_status.items(), key=lambda x: (x[1]['order'], x[0]))
+        # 차트 그룹 수집
+        for cfg_key, ts_df in selected_timeseries_results.items():
+            col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
+            if col not in indicator_groups:
+                indicator_groups[col] = []
+            indicator_groups[col].append((cfg_key, ts_df))
 
+        sorted_indicators = sorted(indicator_status.items(), key=lambda x: (x[1]['order'], x[0]))
+        max_cols = max([len(cases) for cases in indicator_groups.values()]) if indicator_groups else 1
+
+        # 지표별로 Signal 현황과 차트를 함께 표시
         for indicator, status in sorted_indicators:
+            st.markdown("---")
+            st.markdown(f"### **{indicator}**")
+            
+            # Signal 현황 표시
             if len(status['cases']) == 0:
                 st.markdown(f"**{indicator}는 현재 Signal 발생 / Trading 중이 아닙니다.**")
             else:
@@ -3106,96 +3122,72 @@ with tab2:
                             st.markdown(
                                 f"**{indicator_name}의 최근 신호는 {signal_date_str}였고, 목표트레이딩일 {trading_period}일 중 {elapsed_days}일이 경과했습니다. 현재 수익은 {perf_str} 입니다.**")
 
-        # 차트 표시
-        st.markdown("---")
-        # st.subheader("(3) 시계열 차트")
-        st.markdown("#### **(3) 시계열 차트**")
-        st.text("남색은 상승 신호 / 하늘색은 하락 신호입니다.")
+            # 차트 표시
+            if indicator in indicator_groups:
+                cases = indicator_groups[indicator]
+                if len(cases) > 0:
+                    cols = st.columns(max_cols)
 
-        indicator_order = ['USDKRW', 'EURKRW', 'JPYKRW', 'INRKRW', 'RMBKRW', 'AUDKRW',
-                           'US10', 'Crv_2_10', 'Crv_2_30', 'SPR_HY', 'IGHY', 'DXY', 'SPX']
+                    for idx, (cfg_key, ts_df) in enumerate(cases):
+                        col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
 
-        indicator_groups = {}
-        for cfg_key, ts_df in selected_timeseries_results.items():
-            col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
-            if col not in indicator_groups:
-                indicator_groups[col] = []
-            indicator_groups[col].append((cfg_key, ts_df))
+                        with cols[idx]:
+                            title = f"aw={aw}, st={st_val}, tp={tp}, fd_th={fd_th}, fd_lb={fd_lb}"
+                            st.markdown(f"**{title}**")
 
-        max_cols = max([len(cases) for cases in indicator_groups.values()]) if indicator_groups else 1
+                            ts = ts_df.copy()
+                            date_col = ts.columns[0]
 
-        for indicator in indicator_order:
-            if indicator not in indicator_groups:
-                continue
-
-            cases = indicator_groups[indicator]
-            if len(cases) == 0:
-                continue
-
-            st.markdown(indicator)
-            cols = st.columns(max_cols)
-
-            for idx, (cfg_key, ts_df) in enumerate(cases):
-                col, aw, st_val, tp, fd_th, fd_lb, slope_m, perf_m = cfg_key
-
-                with cols[idx]:
-                    title = f"aw={aw}, st={st_val}, tp={tp}, fd_th={fd_th}, fd_lb={fd_lb}"
-                    st.markdown(f"**{title}**")
-
-                    ts = ts_df.copy()
-                    date_col = ts.columns[0]
-
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(
-                        x=ts[date_col],
-                        y=ts['value'],
-                        mode='lines',
-                        name='Value',
-                        line=dict(width=2, color='rgb(245,130,32)'),
-                        showlegend=False
-                    ))
-
-                    signal_mask = ts['signal여부'] == 1
-                    if signal_mask.any():
-                        signal_data = ts.loc[signal_mask]
-
-                        negative_mask = signal_data['signal_slope_sign'] == -1
-                        if negative_mask.any():
+                            fig = go.Figure()
                             fig.add_trace(go.Scatter(
-                                x=signal_data.loc[negative_mask, date_col],
-                                y=signal_data.loc[negative_mask, 'value'],
-                                mode='markers',
-                                name='Signal (-)',
-                                marker=dict(size=8, color='rgb(4,59,114)', symbol='circle'),
+                                x=ts[date_col],
+                                y=ts['value'],
+                                mode='lines',
+                                name='Value',
+                                line=dict(width=2, color='rgb(245,130,32)'),
                                 showlegend=False
                             ))
 
-                        positive_mask = signal_data['signal_slope_sign'] == 1
-                        if positive_mask.any():
-                            fig.add_trace(go.Scatter(
-                                x=signal_data.loc[positive_mask, date_col],
-                                y=signal_data.loc[positive_mask, 'value'],
-                                mode='markers',
-                                name='Signal (+)',
-                                marker=dict(size=8, color='rgb(0,169,206)', symbol='circle'),
-                                showlegend=False
-                            ))
+                            signal_mask = ts['signal여부'] == 1
+                            if signal_mask.any():
+                                signal_data = ts.loc[signal_mask]
 
-                    fig.update_layout(
-                        xaxis_title='Date',
-                        yaxis_title='Value',
-                        height=350,
-                        hovermode='x unified',
-                        font=dict(size=10),
-                        margin=dict(l=40, r=20, t=20, b=40)
-                    )
+                                negative_mask = signal_data['signal_slope_sign'] == -1
+                                if negative_mask.any():
+                                    fig.add_trace(go.Scatter(
+                                        x=signal_data.loc[negative_mask, date_col],
+                                        y=signal_data.loc[negative_mask, 'value'],
+                                        mode='markers',
+                                        name='Signal (-)',
+                                        marker=dict(size=8, color='rgb(4,59,114)', symbol='circle'),
+                                        showlegend=False
+                                    ))
 
-                    st.plotly_chart(fig, use_container_width=True)
+                                positive_mask = signal_data['signal_slope_sign'] == 1
+                                if positive_mask.any():
+                                    fig.add_trace(go.Scatter(
+                                        x=signal_data.loc[positive_mask, date_col],
+                                        y=signal_data.loc[positive_mask, 'value'],
+                                        mode='markers',
+                                        name='Signal (+)',
+                                        marker=dict(size=8, color='rgb(0,169,206)', symbol='circle'),
+                                        showlegend=False
+                                    ))
 
-            for idx in range(len(cases), max_cols):
-                with cols[idx]:
-                    st.empty()
+                            fig.update_layout(
+                                xaxis_title='Date',
+                                yaxis_title='Value',
+                                height=350,
+                                hovermode='x unified',
+                                font=dict(size=10),
+                                margin=dict(l=40, r=20, t=20, b=40)
+                            )
+
+                            st.plotly_chart(fig, use_container_width=True)
+
+                    for idx in range(len(cases), max_cols):
+                        with cols[idx]:
+                            st.empty()
 
     with subtab2:
         st.subheader("Transformer FX Signal")
-
