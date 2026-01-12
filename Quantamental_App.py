@@ -2099,13 +2099,14 @@ with tab1:
             st.plotly_chart(fig_sec_latest, use_container_width=True)
 
             # 선택된 업종별 월간 증감 막대 차트
-            st.markdown("##### **5-1. 업종별 월간 증감**")
             selected_sectors = st.multiselect(
                 "업종 선택 (여러 개 선택 가능)",
                 options=sector_cols,
                 default=sector_cols,
                 key="sec_monthly_select"
             )
+            st.markdown("* 업종선택(5-1, 5-2, 5-3에 적용)")
+            st.markdown("##### **5-1. 업종별 월간 증감**")
             
             if len(selected_sectors) > 0:
                 # 월간 증감 계산
@@ -2144,9 +2145,10 @@ with tab1:
 
             # 누적 증감 라인 차트
             st.markdown("##### **5-2. 업종별 누적 증감**")
+            sectors_to_show = selected_sectors if len(selected_sectors) > 0 else sector_cols
             fig_sec_cum = go.Figure()
             line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
-            for i, col in enumerate(sector_cols):
+            for i, col in enumerate(sectors_to_show):
                 if f'{col}_cumulative' in sec_plot_df_sorted.columns:
                     fig_sec_cum.add_trace(go.Scatter(
                         x=sec_plot_df_sorted['date'],
@@ -2165,9 +2167,10 @@ with tab1:
 
             # 비중 라인 차트
             st.markdown("##### **5-3. 업종별 고용자수 비중 추이**")
+            sectors_to_show = selected_sectors if len(selected_sectors) > 0 else sector_cols
             fig_sec_share = go.Figure()
-            share_colors = ['rgb(245,130,32)', 'rgb(4,59,114)', 'rgb(0,169,206)']
-            for i, col in enumerate(sector_cols):
+            share_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+            for i, col in enumerate(sectors_to_show):
                 if f'{col}_share' in sec_plot_df_sorted.columns:
                     fig_sec_share.add_trace(go.Scatter(
                         x=sec_plot_df_sorted['date'],
