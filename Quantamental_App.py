@@ -2100,12 +2100,11 @@ with tab1:
 
             # 선택된 업종별 월간 증감 막대 차트
             selected_sectors = st.multiselect(
-                "업종 선택 (여러 개 선택 가능)",
+                "업종 선택 (5-1, 5-2, 5-3에 적용)",
                 options=sector_cols,
                 default=sector_cols,
                 key="sec_monthly_select"
-            )
-            st.markdown("* 업종선택(5-1, 5-2, 5-3에 적용)")
+            )            
             st.markdown("##### **5-1. 업종별 월간 증감**")
             
             if len(selected_sectors) > 0:
@@ -3240,4 +3239,5 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
