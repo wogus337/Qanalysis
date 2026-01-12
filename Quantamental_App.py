@@ -2144,47 +2144,51 @@ with tab1:
 
             # 누적 증감 라인 차트
             st.markdown("##### **5-2. 업종별 누적 증감**")
-            sectors_to_show = selected_sectors if len(selected_sectors) > 0 else sector_cols
-            fig_sec_cum = go.Figure()
-            line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
-            for i, col in enumerate(sectors_to_show):
-                if f'{col}_cumulative' in sec_plot_df_sorted.columns:
-                    fig_sec_cum.add_trace(go.Scatter(
-                        x=sec_plot_df_sorted['date'],
-                        y=sec_plot_df_sorted[f'{col}_cumulative'],
-                        mode='lines',
-                        name=col,
-                        line=dict(color=line_colors[i % len(line_colors)], width=1.5)
-                    ))
-            fig_sec_cum.update_layout(
-                xaxis_title="날짜",
-                yaxis_title="누적 증감",
-                margin=dict(l=20, r=20, t=40, b=40),
-                legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
-            )
-            st.plotly_chart(fig_sec_cum, use_container_width=True)
+            if len(selected_sectors) > 0:
+                fig_sec_cum = go.Figure()
+                line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+                for i, col in enumerate(selected_sectors):
+                    if f'{col}_cumulative' in sec_plot_df_sorted.columns:
+                        fig_sec_cum.add_trace(go.Scatter(
+                            x=sec_plot_df_sorted['date'],
+                            y=sec_plot_df_sorted[f'{col}_cumulative'],
+                            mode='lines',
+                            name=col,
+                            line=dict(color=line_colors[i % len(line_colors)], width=1.5)
+                        ))
+                fig_sec_cum.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="누적 증감",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                )
+                st.plotly_chart(fig_sec_cum, use_container_width=True)
+            else:
+                st.info("업종을 선택해주세요.")
 
             # 비중 라인 차트
             st.markdown("##### **5-3. 업종별 고용자수 비중 추이**")
-            sectors_to_show = selected_sectors if len(selected_sectors) > 0 else sector_cols
-            fig_sec_share = go.Figure()
-            share_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
-            for i, col in enumerate(sectors_to_show):
-                if f'{col}_share' in sec_plot_df_sorted.columns:
-                    fig_sec_share.add_trace(go.Scatter(
-                        x=sec_plot_df_sorted['date'],
-                        y=sec_plot_df_sorted[f'{col}_share'],
-                        mode='lines',
-                        name=col,
-                        line=dict(color=share_colors[i % len(share_colors)], width=1.5)
-                    ))
-            fig_sec_share.update_layout(
-                xaxis_title="날짜",
-                yaxis_title="비중 (%)",
-                margin=dict(l=20, r=20, t=40, b=40),
-                legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
-            )
-            st.plotly_chart(fig_sec_share, use_container_width=True)
+            if len(selected_sectors) > 0:
+                fig_sec_share = go.Figure()
+                share_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+                for i, col in enumerate(selected_sectors):
+                    if f'{col}_share' in sec_plot_df_sorted.columns:
+                        fig_sec_share.add_trace(go.Scatter(
+                            x=sec_plot_df_sorted['date'],
+                            y=sec_plot_df_sorted[f'{col}_share'],
+                            mode='lines',
+                            name=col,
+                            line=dict(color=share_colors[i % len(share_colors)], width=1.5)
+                        ))
+                fig_sec_share.update_layout(
+                    xaxis_title="날짜",
+                    yaxis_title="비중 (%)",
+                    margin=dict(l=20, r=20, t=40, b=40),
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+                )
+                st.plotly_chart(fig_sec_share, use_container_width=True)
+            else:
+                st.info("업종을 선택해주세요.")
 
         # 6. Government - Sub (Federal, State, Local)
         st.markdown("##### **6. Government - Sub**")
