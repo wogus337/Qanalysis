@@ -2116,9 +2116,12 @@ with tab1:
                 
                 # 막대 차트 생성
                 fig_sec_monthly = go.Figure()
-                bar_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", 
-                             "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", 
-                             "#bc6c25", "#6c5ce7"]
+                bar_colors = [
+                    "rgb(245, 130, 32)", "rgb(4, 59, 114)", "rgb(0, 169, 206)", "rgb(240, 178, 107)",
+                    "rgb(174, 99, 78)", "rgb(132, 136, 139)", "rgb(0, 134, 184)", "rgb(141, 200, 232)",
+                    "rgb(203, 96, 21)", "rgb(126, 160, 195)", "rgb(194, 172, 151)", "rgb(205, 206, 203)",
+                    "rgb(245, 130, 32)", "rgb(4, 59, 114)"  # 추가 업종을 위한 순환 색상
+                ]
                 
                 for i, col in enumerate(selected_sectors):
                     change_col = f'{col}_change'
@@ -2146,7 +2149,12 @@ with tab1:
             st.markdown("##### **5-2. 업종별 누적 증감**")
             if len(selected_sectors) > 0:
                 fig_sec_cum = go.Figure()
-                line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+                line_colors = [
+                    "rgb(245, 130, 32)", "rgb(4, 59, 114)", "rgb(0, 169, 206)", "rgb(240, 178, 107)",
+                    "rgb(174, 99, 78)", "rgb(132, 136, 139)", "rgb(0, 134, 184)", "rgb(141, 200, 232)",
+                    "rgb(203, 96, 21)", "rgb(126, 160, 195)", "rgb(194, 172, 151)", "rgb(205, 206, 203)",
+                    "rgb(245, 130, 32)", "rgb(4, 59, 114)"  # 추가 업종을 위한 순환 색상
+                ]
                 for i, col in enumerate(selected_sectors):
                     if f'{col}_cumulative' in sec_plot_df_sorted.columns:
                         fig_sec_cum.add_trace(go.Scatter(
@@ -2170,7 +2178,12 @@ with tab1:
             st.markdown("##### **5-3. 업종별 고용자수 비중 추이**")
             if len(selected_sectors) > 0:
                 fig_sec_share = go.Figure()
-                share_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
+                share_colors = [
+                    "rgb(245, 130, 32)", "rgb(4, 59, 114)", "rgb(0, 169, 206)", "rgb(240, 178, 107)",
+                    "rgb(174, 99, 78)", "rgb(132, 136, 139)", "rgb(0, 134, 184)", "rgb(141, 200, 232)",
+                    "rgb(203, 96, 21)", "rgb(126, 160, 195)", "rgb(194, 172, 151)", "rgb(205, 206, 203)",
+                    "rgb(245, 130, 32)", "rgb(4, 59, 114)"  # 추가 업종을 위한 순환 색상
+                ]
                 for i, col in enumerate(selected_sectors):
                     if f'{col}_share' in sec_plot_df_sorted.columns:
                         fig_sec_share.add_trace(go.Scatter(
