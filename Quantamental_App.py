@@ -524,7 +524,7 @@ def run_fractal_dimension_analysis(
 
 
 # Streamlit 앱 시작
-st.set_page_config(layout="wide", page_title="Fractal Dimension Trading Analysis")
+st.set_page_config(layout="wide", page_title="Quantamental Analysis Dashboard")
 
 # CSS로 폰트 크기 20% 감소
 st.markdown("""
@@ -3256,5 +3256,6 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
