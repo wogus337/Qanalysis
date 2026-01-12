@@ -2098,6 +2098,52 @@ with tab1:
             )
             st.plotly_chart(fig_sec_latest, use_container_width=True)
 
+            # 선택된 업종별 월간 증감 막대 차트
+            st.markdown("##### **5-1. 선택 업종별 월간 증감**")
+            col_sec_monthly1, col_sec_monthly2 = st.columns(2)
+            with col_sec_monthly1:
+                selected_sectors = st.multiselect(
+                    "업종 선택 (여러 개 선택 가능)",
+                    options=sector_cols,
+                    default=sector_cols[:3] if len(sector_cols) >= 3 else sector_cols,
+                    key="sec_monthly_select"
+                )
+            
+            if len(selected_sectors) > 0:
+                # 월간 증감 계산
+                sec_plot_df_monthly = sec_plot_df_sorted.copy()
+                for col in selected_sectors:
+                    if col in sec_plot_df_monthly.columns:
+                        sec_plot_df_monthly[f'{col}_change'] = sec_plot_df_monthly[col].diff()
+                
+                # 막대 차트 생성
+                fig_sec_monthly = go.Figure()
+                bar_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", 
+                             "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", 
+                             "#bc6c25", "#6c5ce7"]
+                
+                for i, col in enumerate(selected_sectors):
+                    change_col = f'{col}_change'
+                    if change_col in sec_plot_df_monthly.columns:
+                        fig_sec_monthly.add_trace(go.Bar(
+                            x=sec_plot_df_monthly['date'],
+                            y=sec_plot_df_monthly[change_col],
+                            name=col,
+                            marker_color=bar_colors[i % len(bar_colors)]
+                        ))
+                
+                fig_sec_monthly.update_layout(
+                    barmode='group',
+                    xaxis_title="날짜",
+                    yaxis_title="월간 증감",
+                    margin=dict(l=20, r=20, t=40, b=80),
+                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
+                    legend_title="업종"
+                )
+                st.plotly_chart(fig_sec_monthly, use_container_width=True)
+            else:
+                st.info("업종을 선택해주세요.")
+
             # 누적 증감 라인 차트
             fig_sec_cum = go.Figure()
             line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
@@ -3191,3 +3237,4 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
