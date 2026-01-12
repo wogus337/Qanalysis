@@ -2099,15 +2099,13 @@ with tab1:
             st.plotly_chart(fig_sec_latest, use_container_width=True)
 
             # 선택된 업종별 월간 증감 막대 차트
-            st.markdown("##### **5-1. 선택 업종별 월간 증감**")
-            col_sec_monthly1, col_sec_monthly2 = st.columns(2)
-            with col_sec_monthly1:
-                selected_sectors = st.multiselect(
-                    "업종 선택 (여러 개 선택 가능)",
-                    options=sector_cols,
-                    default=sector_cols[:3] if len(sector_cols) >= 3 else sector_cols,
-                    key="sec_monthly_select"
-                )
+            st.markdown("##### **5-1. 업종별 월간 증감**")
+            selected_sectors = st.multiselect(
+                "업종 선택 (여러 개 선택 가능)",
+                options=sector_cols,
+                default=sector_cols,
+                key="sec_monthly_select"
+            )
             
             if len(selected_sectors) > 0:
                 # 월간 증감 계산
@@ -2145,6 +2143,7 @@ with tab1:
                 st.info("업종을 선택해주세요.")
 
             # 누적 증감 라인 차트
+            st.markdown("##### **5-2. 업종별 누적 증감**")
             fig_sec_cum = go.Figure()
             line_colors = ["#146aff", "#f0580a", "#489904", "#b21c7e", "#daa900", "#18827c", "#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#ffeaa7", "#dda15e", "#bc6c25", "#6c5ce7"]
             for i, col in enumerate(sector_cols):
@@ -2165,6 +2164,7 @@ with tab1:
             st.plotly_chart(fig_sec_cum, use_container_width=True)
 
             # 비중 라인 차트
+            st.markdown("##### **5-3. 업종별 고용자수 비중 추이**")
             fig_sec_share = go.Figure()
             share_colors = ['rgb(245,130,32)', 'rgb(4,59,114)', 'rgb(0,169,206)']
             for i, col in enumerate(sector_cols):
