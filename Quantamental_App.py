@@ -1039,7 +1039,7 @@ def run_analysis(raw_df):
 
 
 # 탭 생성
-tab1, tab2 = st.tabs(["US Macro", "Signal Model"])
+tab1, tab2, tab3 = st.tabs(["US Macro", "FedWatch", "Signal Model"])
 
 with tab1:
     subtab1, subtab2, subtab3, subtab4, subtab5 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI"])
@@ -2835,6 +2835,316 @@ with tab1:
         # PMI 보고 차트 코드 참고하기
 
 with tab2:
+    st.subheader("FedWatch")
+    
+    # 새로고침 버튼
+    col_btn, col_info = st.columns([10, 1])
+    with col_btn:
+        if st.button("새로고침(30초 이내)", key="refresh_fedwatch", help="최신 데이터를 즉시 불러옵니다"):
+            load_fedwatch_base_data.clear()
+            load_fedwatch_codes_data.clear()
+            load_fedwatch_csv.clear()
+            st.success("데이터를 새로 불러오는 중...")
+            st.rerun()
+        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
+    
+    # 1. CEIC 데이터 로딩 함수
+    @st.cache_data(ttl=604800)  # 1주일 캐싱
+    def load_fedwatch_base_data():
+        """기본 FedWatch 데이터 (51268101, 368677197)를 로드합니다."""
+        codes = ['51268101', '368677197']
+        df = Ceic.series(codes, start_date='2020-01-01').as_pandas()
+        
+        df['id'] = df['id'].astype(str)
+        df_pivot = df.pivot(index='date', columns='id', values='value')
+        df_pivot = df_pivot.reset_index().rename(columns={'index': 'date'})
+        
+        # 칼럼명 변경: 51268101 -> Upper, 368677197 -> Lower
+        if '51268101' in df_pivot.columns:
+            df_pivot = df_pivot.rename(columns={'51268101': 'Upper'})
+        if '368677197' in df_pivot.columns:
+            df_pivot = df_pivot.rename(columns={'368677197': 'Lower'})
+        
+        df_pivot['date'] = pd.to_datetime(df_pivot['date'])
+        return df_pivot
+    
+    @st.cache_data(ttl=604800)  # 1주일 캐싱
+    def load_fedwatch_codes_data(selected_date, codes_list):
+        """선택한 날짜의 코드들에 대한 데이터를 로드합니다."""
+        if not codes_list:
+            return pd.DataFrame()
+        
+        df = Ceic.series(codes_list).as_pandas()
+        df['id'] = df['id'].astype(str)
+        df_pivot = df.pivot(index='date', columns='id', values='value')
+        df_pivot = df_pivot.reset_index().rename(columns={'index': 'date'})
+        df_pivot['date'] = pd.to_datetime(df_pivot['date'])
+        return df_pivot
+    
+    # CSV 파일 로드
+    @st.cache_data
+    def load_fedwatch_csv():
+        """cmefedwatch.csv 파일을 로드합니다."""
+        df = pd.read_csv('cmefedwatch.csv')
+        df['date'] = pd.to_datetime(df['date'])
+        return df
+    
+    # 기본 데이터 로드
+    base_df = load_fedwatch_base_data()
+    csv_df = load_fedwatch_csv()
+    
+    # 4. 첫 번째 시계열 차트 (Upper, Lower)
+    st.markdown("#### **Upper & Lower 시계열 차트**")
+    
+    if len(base_df) > 0:
+        min_date_base = base_df['date'].min()
+        max_date_base = base_df['date'].max()
+        default_start = pd.to_datetime("2020-01-01")
+        if default_start < min_date_base:
+            default_start = min_date_base
+        
+        col_chart1_start, col_chart1_end = st.columns(2)
+        with col_chart1_start:
+            chart1_start = st.date_input(
+                "시작일",
+                value=default_start.date(),
+                min_value=min_date_base.date(),
+                max_value=max_date_base.date(),
+                key="fedwatch_chart1_start"
+            )
+        with col_chart1_end:
+            chart1_end = st.date_input(
+                "종료일",
+                value=max_date_base.date(),
+                min_value=min_date_base.date(),
+                max_value=max_date_base.date(),
+                key="fedwatch_chart1_end"
+            )
+        
+        chart1_start_dt = pd.to_datetime(chart1_start)
+        chart1_end_dt = pd.to_datetime(chart1_end)
+        if chart1_start_dt > chart1_end_dt:
+            chart1_end_dt = chart1_start_dt
+        
+        mask = (base_df['date'] >= chart1_start_dt) & (base_df['date'] <= chart1_end_dt)
+        chart1_df = base_df.loc[mask].copy()
+        
+        if len(chart1_df) > 0:
+            fig1 = go.Figure()
+            
+            if 'Upper' in chart1_df.columns:
+                fig1.add_trace(go.Scatter(
+                    x=chart1_df['date'],
+                    y=chart1_df['Upper'],
+                    mode='lines+markers',
+                    name='Upper',
+                    line=dict(color='rgb(245,130,32)', width=2)
+                ))
+            
+            if 'Lower' in chart1_df.columns:
+                fig1.add_trace(go.Scatter(
+                    x=chart1_df['date'],
+                    y=chart1_df['Lower'],
+                    mode='lines+markers',
+                    name='Lower',
+                    line=dict(color='rgb(4,59,114)', width=2)
+                ))
+            
+            fig1.update_layout(
+                xaxis_title="날짜",
+                yaxis_title="값",
+                margin=dict(l=20, r=20, t=40, b=40),
+                legend_title="항목"
+            )
+            st.plotly_chart(fig1, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # 5. CSV 파일에서 날짜 선택
+    st.markdown("#### **CME FedWatch 데이터**")
+    
+    if len(csv_df) > 0:
+        available_dates = sorted(csv_df['date'].unique(), reverse=True)
+        selected_csv_date = st.selectbox(
+            "날짜 선택",
+            options=available_dates,
+            format_func=lambda x: x.strftime('%Y-%m-%d'),
+            key="fedwatch_csv_date"
+        )
+        
+        # 6. 선택한 날짜의 행만 가져오기
+        selected_rows = csv_df[csv_df['date'] == selected_csv_date].copy()
+        
+        if len(selected_rows) > 0:
+            # 7. CSV 파일의 행 순서 유지 (인덱스 리셋)
+            selected_rows = selected_rows.reset_index(drop=True)
+            
+            # 코드 리스트 추출 (행 순서 유지)
+            codes_list = selected_rows['code'].astype(str).tolist()
+            upper_values = selected_rows['upper'].tolist()
+            
+            # 8. 각 코드에 대한 데이터 로드 및 병합
+            with st.spinner("데이터를 로딩하는 중..."):
+                # 모든 코드를 한 번에 로드 (시작 날짜 제한 없음)
+                all_codes_data = Ceic.series(codes_list).as_pandas()
+                
+                
+                if len(all_codes_data) > 0:
+                    all_codes_data['id'] = all_codes_data['id'].astype(str)
+                    all_pivot = all_codes_data.pivot(index='date', columns='id', values='value')
+                    all_pivot = all_pivot.reset_index().rename(columns={'index': 'date'})
+                    all_pivot['date'] = pd.to_datetime(all_pivot['date'])
+                    
+                    # CSV 파일의 행 순서대로 병합 (칼럼명을 upper 값으로 변경)
+                    merged_df = None
+                    for idx, code in enumerate(codes_list):
+                        code_str = str(code)
+                        if code_str in all_pivot.columns:
+                            upper_val = upper_values[idx]
+                            if merged_df is None:
+                                merged_df = all_pivot[['date', code_str]].copy()
+                                merged_df = merged_df.rename(columns={code_str: str(upper_val)})
+                            else:
+                                temp_df = all_pivot[['date', code_str]].copy()
+                                temp_df = temp_df.rename(columns={code_str: str(upper_val)})
+                                merged_df = pd.merge(merged_df, temp_df, on='date', how='outer')
+                else:
+                    merged_df = None
+                
+                if merged_df is not None:
+                    merged_df = merged_df.sort_values('date')
+                    
+                    # 9. 모든 값이 0인 칼럼 제외
+                    numeric_cols = [col for col in merged_df.columns if col != 'date']
+                    for col in numeric_cols:
+                        if merged_df[col].fillna(0).abs().sum() == 0:
+                            merged_df = merged_df.drop(columns=[col])
+                    
+                    # 10. 차트 생성
+                    st.markdown("##### **시계열 라인 차트**")
+                    
+                    if len(merged_df) > 0:
+                        min_date_merged = merged_df['date'].min()
+                        max_date_merged = merged_df['date'].max()
+                        default_start_merged = min_date_merged
+                        
+                        col_chart2_start, col_chart2_end = st.columns(2)
+                        with col_chart2_start:
+                            chart2_start = st.date_input(
+                                "시작일",
+                                value=default_start_merged.date(),
+                                min_value=min_date_merged.date(),
+                                max_value=max_date_merged.date(),
+                                key="fedwatch_chart2_start"
+                            )
+                        with col_chart2_end:
+                            chart2_end = st.date_input(
+                                "종료일",
+                                value=max_date_merged.date(),
+                                min_value=min_date_merged.date(),
+                                max_value=max_date_merged.date(),
+                                key="fedwatch_chart2_end"
+                            )
+                        
+                        chart2_start_dt = pd.to_datetime(chart2_start)
+                        chart2_end_dt = pd.to_datetime(chart2_end)
+                        if chart2_start_dt > chart2_end_dt:
+                            chart2_end_dt = chart2_start_dt
+                        
+                        mask2 = (merged_df['date'] >= chart2_start_dt) & (merged_df['date'] <= chart2_end_dt)
+                        chart2_df = merged_df.loc[mask2].copy()
+                        
+                        if len(chart2_df) > 0:
+                            fig2 = go.Figure()
+                            
+                            numeric_cols_chart = [col for col in chart2_df.columns if col != 'date']
+                            colors = [
+                                "rgb(245,130,32)", "rgb(4,59,114)", "rgb(0,169,206)", "rgb(240,178,107)",
+                                "rgb(174,99,78)", "rgb(132,136,139)", "rgb(0,134,184)", "rgb(141,200,232)",
+                                "rgb(203,96,21)", "rgb(126,160,195)", "rgb(194,172,151)", "rgb(205,206,203)"
+                            ]
+                            
+                            for i, col in enumerate(numeric_cols_chart):
+                                fig2.add_trace(go.Scatter(
+                                    x=chart2_df['date'],
+                                    y=chart2_df[col],
+                                    mode='lines+markers',
+                                    name=f'{col}',
+                                    line=dict(color=colors[i % len(colors)], width=1.5)
+                                ))
+                            
+                            fig2.update_layout(
+                                xaxis_title="날짜",
+                                yaxis_title="값",
+                                margin=dict(l=20, r=20, t=40, b=40),
+                                legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
+                                legend_title="Upper 값"
+                            )
+                            st.plotly_chart(fig2, use_container_width=True)
+                    
+                    # 11. 세로막대 차트
+                    st.markdown("##### **세로막대 차트**")
+                    
+                    if len(merged_df) > 0:
+                        available_dates_bar = sorted(merged_df['date'].unique(), reverse=True)
+                        default_bar_date = available_dates_bar[0] if len(available_dates_bar) > 0 else None
+                        
+                        bar_selected_date = st.selectbox(
+                            "날짜 선택",
+                            options=available_dates_bar,
+                            index=0,
+                            format_func=lambda x: x.strftime('%Y-%m-%d'),
+                            key="fedwatch_bar_date"
+                        )
+                        
+                        bar_data = merged_df[merged_df['date'] == bar_selected_date]
+                        if len(bar_data) > 0:
+                            bar_row = bar_data.iloc[0]
+                            numeric_cols_bar = [col for col in bar_row.index if col != 'date']
+                            bar_values = [bar_row[col] if pd.notna(bar_row[col]) else 0 for col in numeric_cols_bar]
+                            bar_labels = [str(col) for col in numeric_cols_bar]
+                            
+                            # 숫자 순서로 정렬 (안전한 변환)
+                            def safe_float(s):
+                                try:
+                                    return float(s)
+                                except (ValueError, AttributeError):
+                                    return 0.0
+                            
+                            sorted_pairs = sorted(zip(bar_labels, bar_values), key=lambda x: safe_float(x[0]))
+                            bar_labels_sorted = [p[0] for p in sorted_pairs]
+                            bar_values_sorted = [p[1] for p in sorted_pairs]
+                        else:
+                            bar_labels_sorted = []
+                            bar_values_sorted = []
+                        
+                        if len(bar_labels_sorted) > 0:
+                            fig3 = go.Figure()
+                            colors_bar = ['rgb(245,130,32)' if v >= 0 else 'rgb(4,59,114)' for v in bar_values_sorted]
+                            
+                            fig3.add_trace(go.Bar(
+                                x=bar_labels_sorted,
+                                y=bar_values_sorted,
+                                marker_color=colors_bar
+                            ))
+                            
+                            fig3.update_layout(
+                                xaxis_title="Upper 값",
+                                yaxis_title="값",
+                                margin=dict(l=20, r=20, t=40, b=80),
+                                xaxis=dict(tickangle=-45)
+                            )
+                            st.plotly_chart(fig3, use_container_width=True)
+                        else:
+                            st.warning("선택한 날짜에 대한 데이터가 없습니다.")
+                else:
+                    st.warning("선택한 날짜에 대한 데이터를 불러올 수 없습니다.")
+        else:
+            st.warning("선택한 날짜에 해당하는 데이터가 없습니다.")
+    else:
+        st.warning("CSV 파일을 불러올 수 없습니다.")
+
+with tab3:
     subtab1, subtab2 = st.tabs(["FDS", "TransformerFX"])
 
     with subtab1:
@@ -3256,6 +3566,7 @@ with tab2:
 
     with subtab2:
         st.subheader("Transformer FX Signal")
+
 
 
 
