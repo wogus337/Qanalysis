@@ -2837,17 +2837,6 @@ with tab1:
 with tab2:
     st.subheader("FedWatch")
     
-    # 새로고침 버튼
-    col_btn, col_info = st.columns([10, 1])
-    with col_btn:
-        if st.button("새로고침(30초 이내)", key="refresh_fedwatch", help="최신 데이터를 즉시 불러옵니다"):
-            load_fedwatch_base_data.clear()
-            load_fedwatch_codes_data.clear()
-            load_fedwatch_csv.clear()
-            st.success("데이터를 새로 불러오는 중...")
-            st.rerun()
-        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
-    
     # 1. CEIC 데이터 로딩 함수
     @st.cache_data(ttl=604800)  # 1주일 캐싱
     def load_fedwatch_base_data():
@@ -2888,6 +2877,17 @@ with tab2:
         df = pd.read_csv('cmefedwatch.csv')
         df['date'] = pd.to_datetime(df['date'])
         return df
+    
+    # 새로고침 버튼
+    col_btn, col_info = st.columns([10, 1])
+    with col_btn:
+        if st.button("새로고침(30초 이내)", key="refresh_fedwatch", help="최신 데이터를 즉시 불러옵니다"):
+            load_fedwatch_base_data.clear()
+            load_fedwatch_codes_data.clear()
+            load_fedwatch_csv.clear()
+            st.success("데이터를 새로 불러오는 중...")
+            st.rerun()
+        st.caption("💡 기본적으로 캐시된 데이터를 사용합니다. 최신 데이터가 필요할 때만 새로고침 버튼을 클릭하세요.")
     
     # 기본 데이터 로드
     base_df = load_fedwatch_base_data()
