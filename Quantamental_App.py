@@ -2894,7 +2894,7 @@ with tab2:
     csv_df = load_fedwatch_csv()
     
     # 4. 첫 번째 시계열 차트 (Upper, Lower)
-    st.markdown("#### **Upper & Lower 시계열 차트**")
+    st.markdown("#### **Federal Funds Target Range**")
     
     if len(base_df) > 0:
         min_date_base = base_df['date'].min()
@@ -2936,7 +2936,7 @@ with tab2:
                 fig1.add_trace(go.Scatter(
                     x=chart1_df['date'],
                     y=chart1_df['Upper'],
-                    mode='lines+markers',
+                    mode='lines',
                     name='Upper',
                     line=dict(color='rgb(245,130,32)', width=2)
                 ))
@@ -2945,7 +2945,7 @@ with tab2:
                 fig1.add_trace(go.Scatter(
                     x=chart1_df['date'],
                     y=chart1_df['Lower'],
-                    mode='lines+markers',
+                    mode='lines',
                     name='Lower',
                     line=dict(color='rgb(4,59,114)', width=2)
                 ))
@@ -2966,7 +2966,7 @@ with tab2:
     if len(csv_df) > 0:
         available_dates = sorted(csv_df['date'].unique(), reverse=True)
         selected_csv_date = st.selectbox(
-            "날짜 선택",
+            "FOMC Meeting 일자",
             options=available_dates,
             format_func=lambda x: x.strftime('%Y-%m-%d'),
             key="fedwatch_csv_date"
@@ -3021,12 +3021,16 @@ with tab2:
                             merged_df = merged_df.drop(columns=[col])
                     
                     # 10. 차트 생성
-                    st.markdown("##### **시계열 라인 차트**")
+                    st.markdown("##### **확률 추이**")
                     
                     if len(merged_df) > 0:
                         min_date_merged = merged_df['date'].min()
                         max_date_merged = merged_df['date'].max()
-                        default_start_merged = min_date_merged
+                        # 종료일 기준 3개월 전의 첫날짜
+                        default_end_merged = max_date_merged
+                        default_start_merged = default_end_merged - pd.DateOffset(months=3)
+                        if default_start_merged < min_date_merged:
+                            default_start_merged = min_date_merged
                         
                         col_chart2_start, col_chart2_end = st.columns(2)
                         with col_chart2_start:
@@ -3055,35 +3059,69 @@ with tab2:
                         chart2_df = merged_df.loc[mask2].copy()
                         
                         if len(chart2_df) > 0:
-                            fig2 = go.Figure()
-                            
+                            # 선택한 날짜 구간에서 모든 값이 0인 칼럼 제외
                             numeric_cols_chart = [col for col in chart2_df.columns if col != 'date']
-                            colors = [
-                                "rgb(245,130,32)", "rgb(4,59,114)", "rgb(0,169,206)", "rgb(240,178,107)",
-                                "rgb(174,99,78)", "rgb(132,136,139)", "rgb(0,134,184)", "rgb(141,200,232)",
-                                "rgb(203,96,21)", "rgb(126,160,195)", "rgb(194,172,151)", "rgb(205,206,203)"
-                            ]
+                            cols_to_remove = []
+                            for col in numeric_cols_chart:
+                                if chart2_df[col].fillna(0).abs().sum() == 0:
+                                    cols_to_remove.append(col)
+                            for col in cols_to_remove:
+                                numeric_cols_chart.remove(col)
                             
-                            for i, col in enumerate(numeric_cols_chart):
-                                fig2.add_trace(go.Scatter(
-                                    x=chart2_df['date'],
-                                    y=chart2_df[col],
-                                    mode='lines+markers',
-                                    name=f'{col}',
-                                    line=dict(color=colors[i % len(colors)], width=1.5)
-                                ))
-                            
-                            fig2.update_layout(
-                                xaxis_title="날짜",
-                                yaxis_title="값",
-                                margin=dict(l=20, r=20, t=40, b=40),
-                                legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
-                                legend_title="Upper 값"
-                            )
-                            st.plotly_chart(fig2, use_container_width=True)
+                            if len(numeric_cols_chart) > 0:
+                                fig2 = go.Figure()
+                                colors = [
+                                    "rgb(245,130,32)", "rgb(4,59,114)", "rgb(0,169,206)", "rgb(240,178,107)",
+                                    "rgb(174,99,78)", "rgb(132,136,139)", "rgb(0,134,184)", "rgb(141,200,232)",
+                                    "rgb(203,96,21)", "rgb(126,160,195)", "rgb(194,172,151)", "rgb(205,206,203)"
+                                ]
+                                
+                                # 가장 최근 날짜 찾기
+                                latest_date_in_range = chart2_df['date'].max()
+                                latest_data = chart2_df[chart2_df['date'] == latest_date_in_range].iloc[0]
+                                
+                                for i, col in enumerate(numeric_cols_chart):
+                                    fig2.add_trace(go.Scatter(
+                                        x=chart2_df['date'],
+                                        y=chart2_df[col],
+                                        mode='lines',
+                                        name=f'{col}',
+                                        line=dict(color=colors[i % len(colors)], width=1.5),
+                                        showlegend=True
+                                    ))
+                                    
+                                    # 가장 오른쪽(최근 데이터)에 레이블 추가
+                                    latest_value = latest_data[col]
+                                    if pd.notna(latest_value):
+                                        fig2.add_annotation(
+                                            x=latest_date_in_range,
+                                            y=latest_value,
+                                            text=f"{latest_date_in_range.strftime('%Y-%m-%d')}<br>{latest_value:.2f}",
+                                            showarrow=True,
+                                            arrowhead=2,
+                                            arrowsize=1,
+                                            arrowwidth=2,
+                                            arrowcolor=colors[i % len(colors)],
+                                            ax=0,
+                                            ay=-30,
+                                            bgcolor="white",
+                                            bordercolor=colors[i % len(colors)],
+                                            borderwidth=1
+                                        )
+                                
+                                fig2.update_layout(
+                                    xaxis_title="날짜",
+                                    yaxis_title="값",
+                                    margin=dict(l=20, r=20, t=40, b=40),
+                                    legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
+                                    legend_title="Upper 값"
+                                )
+                                st.plotly_chart(fig2, use_container_width=True)
+                            else:
+                                st.info("선택한 날짜 구간에 표시할 데이터가 없습니다.")
                     
                     # 11. 세로막대 차트
-                    st.markdown("##### **세로막대 차트**")
+                    st.markdown("##### **특정일 확률 차트**")
                     
                     if len(merged_df) > 0:
                         available_dates_bar = sorted(merged_df['date'].unique(), reverse=True)
@@ -3122,10 +3160,16 @@ with tab2:
                             fig3 = go.Figure()
                             colors_bar = ['rgb(245,130,32)' if v >= 0 else 'rgb(4,59,114)' for v in bar_values_sorted]
                             
+                            # 레이블 텍스트 생성 (Upper값, value값)
+                            text_labels = [f"{label}<br>{val:.2f}" for label, val in zip(bar_labels_sorted, bar_values_sorted)]
+                            
                             fig3.add_trace(go.Bar(
                                 x=bar_labels_sorted,
                                 y=bar_values_sorted,
-                                marker_color=colors_bar
+                                marker_color=colors_bar,
+                                text=text_labels,
+                                textposition='outside',
+                                textfont=dict(size=10)
                             ))
                             
                             fig3.update_layout(
