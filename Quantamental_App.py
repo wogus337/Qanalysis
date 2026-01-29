@@ -2954,7 +2954,11 @@ with tab2:
                 xaxis_title="날짜",
                 yaxis_title="값",
                 margin=dict(l=20, r=20, t=40, b=40),
-                legend_title="항목"
+                legend_title="항목",
+                font=dict(size=14),
+                xaxis=dict(title_font=dict(size=16)),
+                yaxis=dict(title_font=dict(size=16)),
+                legend_title_font=dict(size=16)
             )
             st.plotly_chart(fig1, use_container_width=True)
     
@@ -2964,7 +2968,7 @@ with tab2:
     st.markdown("#### **CME FedWatch 데이터**")
     
     if len(csv_df) > 0:
-        available_dates = sorted(csv_df['date'].unique(), reverse=True)
+        available_dates = sorted(csv_df['date'].unique(), reverse=False)
         selected_csv_date = st.selectbox(
             "FOMC Meeting 일자",
             options=available_dates,
@@ -3096,7 +3100,7 @@ with tab2:
                                         fig2.add_annotation(
                                             x=latest_date_in_range,
                                             y=latest_value,
-                                            text=f"{latest_date_in_range.strftime('%Y-%m-%d')}<br>{latest_value:.2f}",
+                                            text=f"{col}<br>{latest_value:.2f}",
                                             showarrow=True,
                                             arrowhead=2,
                                             arrowsize=1,
@@ -3106,7 +3110,8 @@ with tab2:
                                             ay=-30,
                                             bgcolor="white",
                                             bordercolor=colors[i % len(colors)],
-                                            borderwidth=1
+                                            borderwidth=1,
+                                            font=dict(size=14)
                                         )
                                 
                                 fig2.update_layout(
@@ -3114,7 +3119,11 @@ with tab2:
                                     yaxis_title="값",
                                     margin=dict(l=20, r=20, t=40, b=40),
                                     legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02),
-                                    legend_title="Upper 값"
+                                    legend_title="Upper 값",
+                                    font=dict(size=14),
+                                    xaxis=dict(title_font=dict(size=16)),
+                                    yaxis=dict(title_font=dict(size=16)),
+                                    legend_title_font=dict(size=16)
                                 )
                                 st.plotly_chart(fig2, use_container_width=True)
                             else:
@@ -3169,14 +3178,16 @@ with tab2:
                                 marker_color=colors_bar,
                                 text=text_labels,
                                 textposition='outside',
-                                textfont=dict(size=10)
+                                textfont=dict(size=12)
                             ))
                             
                             fig3.update_layout(
                                 xaxis_title="Upper 값",
                                 yaxis_title="값",
                                 margin=dict(l=20, r=20, t=40, b=80),
-                                xaxis=dict(tickangle=-45)
+                                xaxis=dict(tickangle=-45, title_font=dict(size=16)),
+                                yaxis=dict(title_font=dict(size=16)),
+                                font=dict(size=14)
                             )
                             st.plotly_chart(fig3, use_container_width=True)
                         else:
