@@ -2969,9 +2969,22 @@ with tab2:
     
     if len(csv_df) > 0:
         available_dates = sorted(csv_df['date'].unique(), reverse=False)
+        
+        # 오늘 이후 날짜 중 가장 가까운 날짜 찾기
+        today = pd.Timestamp.today().normalize()
+        future_dates = [d for d in available_dates if pd.to_datetime(d) >= today]
+        
+        if len(future_dates) > 0:
+            default_date = future_dates[0]
+            default_index = available_dates.index(default_date)
+        else:
+            # 오늘 이후 날짜가 없으면 가장 최근 날짜 사용
+            default_index = len(available_dates) - 1
+        
         selected_csv_date = st.selectbox(
             "FOMC Meeting 일자",
             options=available_dates,
+            index=default_index,
             format_func=lambda x: x.strftime('%Y-%m-%d'),
             key="fedwatch_csv_date"
         )
