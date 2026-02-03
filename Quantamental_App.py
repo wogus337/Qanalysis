@@ -3635,15 +3635,34 @@ with tab3:
     with subtab2:
         st.subheader("FX Signal by transformer")
         
-        # 엑셀 파일 업로드
-        uploaded_file = st.file_uploader("엑셀파일(streamlit_24_fx) 업로드", type=['xlsx', 'xls'], key="fx_transformer_upload")
+        # 기본 파일 경로
+        default_file_path = 'streamlit_24_fx.xlsx'
+        
+        # 엑셀 파일 업로드 (선택사항)
+        uploaded_file = st.file_uploader("엑셀 파일 업로드 (선택사항, 기본값: streamlit_24_fx.xlsx)", type=['xlsx', 'xls'], key="fx_transformer_upload")
+        
+        # 사용자가 파일을 업로드했으면 업로드한 파일 사용, 아니면 기본 파일 사용
+        file_to_use = None
+        file_source = None
         
         if uploaded_file is not None:
+            file_to_use = uploaded_file
+            file_source = "업로드된 파일"
+        else:
+            # 기본 파일이 존재하는지 확인
+            if os.path.exists(default_file_path):
+                file_to_use = default_file_path
+                file_source = "기본 파일 (streamlit_24_fx.xlsx)"
+            else:
+                st.warning(f"기본 파일({default_file_path})을 찾을 수 없습니다. 파일을 업로드해주세요.")
+                file_to_use = None
+        
+        if file_to_use is not None:
             try:
                 # USDKRW 시트 읽기
-                df_usdkrw = pd.read_excel(uploaded_file, sheet_name='USDKRW')
+                df_usdkrw = pd.read_excel(file_to_use, sheet_name='USDKRW')
                 # KRWUSD 시트 읽기
-                df_krwusd = pd.read_excel(uploaded_file, sheet_name='KRWUSD')
+                df_krwusd = pd.read_excel(file_to_use, sheet_name='KRWUSD')
                 
                 # DATE 컬럼을 datetime으로 변환
                 df_usdkrw['DATE'] = pd.to_datetime(df_usdkrw['DATE'])
@@ -3653,7 +3672,7 @@ with tab3:
                 max_date_usdkrw = df_usdkrw['DATE'].max()
                 max_date_krwusd = df_krwusd['DATE'].max()
                 latest_date = max(max_date_usdkrw, max_date_krwusd)
-                st.caption(f"📅 Last Update: {latest_date.strftime('%Y-%m-%d')}")
+                st.caption(f"📅 Last Update: {latest_date.strftime('%Y-%m-%d')} ({file_source})")
                 
                 # USDKRW 차트 섹션
                 st.markdown("### **USDKRW**")
@@ -4000,9 +4019,8 @@ with tab3:
             except Exception as e:
                 st.error(f"파일을 읽는 중 오류가 발생했습니다: {str(e)}")
                 st.info("파일 형식을 확인해주세요. USDKRW와 KRWUSD 시트가 필요합니다.")
-        else:
-            st.info("엑셀 파일을 업로드해주세요.")
-
+        elif file_to_use is None:
+            st.info("기본 파일(streamlit_24_fx.xlsx)을 찾을 수 없습니다. 파일을 업로드해주세요.")
 
 
 
