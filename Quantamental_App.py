@@ -3675,7 +3675,7 @@ with tab3:
                 st.caption(f"📅 Last Update: {latest_date.strftime('%Y-%m-%d')} ({file_source})")
                 
                 # USDKRW 차트 섹션
-                st.markdown("### **USDKRW**")
+                st.markdown("### **USD강세 모델**")
                 
                 # 2023년 11월부터 필터링
                 df_usdkrw_filtered = df_usdkrw[df_usdkrw['DATE'] >= '2023-11-01'].copy()
@@ -3846,7 +3846,7 @@ with tab3:
                     st.plotly_chart(fig2, use_container_width=True)
                 
                 # KRWUSD 차트 섹션
-                st.markdown("### **KRWUSD**")
+                st.markdown("### **KRW강세 모델**")
                 
                 # 2023년 11월부터 필터링
                 df_krwusd_filtered = df_krwusd[df_krwusd['DATE'] >= '2023-11-01'].copy()
@@ -4021,6 +4021,7 @@ with tab3:
                 st.info("파일 형식을 확인해주세요. USDKRW와 KRWUSD 시트가 필요합니다.")
         elif file_to_use is None:
             st.info("기본 파일(streamlit_24_fx.xlsx)을 찾을 수 없습니다. 파일을 업로드해주세요.")
+
 
 
 
