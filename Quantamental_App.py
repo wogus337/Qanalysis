@@ -3636,7 +3636,7 @@ with tab3:
         st.subheader("FX Signal by transformer")
         
         # 엑셀 파일 업로드
-        uploaded_file = st.file_uploader("엑셀 파일 업로드", type=['xlsx', 'xls'], key="fx_transformer_upload")
+        uploaded_file = st.file_uploader("엑셀파일(streamlit_24_fx) 업로드", type=['xlsx', 'xls'], key="fx_transformer_upload")
         
         if uploaded_file is not None:
             try:
@@ -3658,11 +3658,9 @@ with tab3:
                 # USDKRW 차트 섹션
                 st.markdown("### **USDKRW**")
                 
-                # 2013년 11월부터 필터링
-                df_usdkrw_filtered = df_usdkrw[df_usdkrw['DATE'] >= '2013-11-01'].copy()
+                # 2023년 11월부터 필터링
+                df_usdkrw_filtered = df_usdkrw[df_usdkrw['DATE'] >= '2023-11-01'].copy()
                 
-                # d 칼럼 생성 (Conviction >= 0.6이면 0.6, 아니면 Conviction 값)
-                df_usdkrw_filtered['d'] = df_usdkrw_filtered['Conviction'].apply(lambda x: 0.6 if x >= 0.6 else x)
                 # k 칼럼 생성 (항상 0.6)
                 df_usdkrw_filtered['k'] = 0.6
                 
@@ -3670,16 +3668,16 @@ with tab3:
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # 첫 번째 차트: Conviction과 USDKRW
+                    # 첫 번째 차트: Prob1, Conviction과 USDKRW
                     fig1 = go.Figure()
                     
-                    # d 영역형 차트 (가장 아래 레이어) - 0.6 이상인 부분만 다른 색으로
+                    # Prob1 영역형 차트 (가장 아래 레이어)
                     fig1.add_trace(go.Scatter(
                         x=df_usdkrw_filtered['DATE'],
-                        y=df_usdkrw_filtered['d'],
+                        y=df_usdkrw_filtered['Prob1'],
                         mode='lines',
                         fill='tozeroy',
-                        name='d',
+                        name='Prob1',
                         line=dict(color='rgba(245, 130, 32, 0)', width=0),
                         fillcolor='rgba(245, 130, 32, 0.5)',
                         showlegend=False,
@@ -3700,13 +3698,13 @@ with tab3:
                         yaxis='y'
                     ))
                     
-                    # k 라인 (0.6 기준선, 가장 위 레이어)
+                    # k 라인 (0.6 기준선, 가장 위 레이어) - 검정색 실선
                     fig1.add_trace(go.Scatter(
                         x=df_usdkrw_filtered['DATE'],
                         y=df_usdkrw_filtered['k'],
                         mode='lines',
                         name='k',
-                        line=dict(color='rgba(0, 0, 0, 0.5)', width=1, dash='dash'),
+                        line=dict(color='rgb(0, 0, 0)', width=1),
                         showlegend=False,
                         yaxis='y'
                     ))
@@ -3741,7 +3739,7 @@ with tab3:
                         yaxis=dict(
                             title='Conviction',
                             side='left',
-                            range=[0, max(df_usdkrw_filtered['Conviction'].max(), 0.6) * 1.1]
+                            range=[0, max(df_usdkrw_filtered['Conviction'].max(), df_usdkrw_filtered['Prob1'].max(), 0.6) * 1.1]
                         ),
                         yaxis2=dict(
                             title='USDKRW',
@@ -3831,11 +3829,9 @@ with tab3:
                 # KRWUSD 차트 섹션
                 st.markdown("### **KRWUSD**")
                 
-                # 2013년 11월부터 필터링
-                df_krwusd_filtered = df_krwusd[df_krwusd['DATE'] >= '2013-11-01'].copy()
+                # 2023년 11월부터 필터링
+                df_krwusd_filtered = df_krwusd[df_krwusd['DATE'] >= '2023-11-01'].copy()
                 
-                # d 칼럼 생성 (Conviction >= 0.6이면 0.6, 아니면 Conviction 값)
-                df_krwusd_filtered['d'] = df_krwusd_filtered['Conviction'].apply(lambda x: 0.6 if x >= 0.6 else x)
                 # k 칼럼 생성 (항상 0.6)
                 df_krwusd_filtered['k'] = 0.6
                 
@@ -3843,16 +3839,16 @@ with tab3:
                 col3, col4 = st.columns(2)
                 
                 with col3:
-                    # 첫 번째 차트: Conviction과 USDKRW
+                    # 첫 번째 차트: Prob0, Conviction과 USDKRW
                     fig3 = go.Figure()
                     
-                    # d 영역형 차트 (가장 아래 레이어) - 0.6 이상인 부분만 다른 색으로
+                    # Prob0 영역형 차트 (가장 아래 레이어)
                     fig3.add_trace(go.Scatter(
                         x=df_krwusd_filtered['DATE'],
-                        y=df_krwusd_filtered['d'],
+                        y=df_krwusd_filtered['Prob0'],
                         mode='lines',
                         fill='tozeroy',
-                        name='d',
+                        name='Prob0',
                         line=dict(color='rgba(245, 130, 32, 0)', width=0),
                         fillcolor='rgba(245, 130, 32, 0.5)',
                         showlegend=False,
@@ -3873,13 +3869,13 @@ with tab3:
                         yaxis='y'
                     ))
                     
-                    # k 라인 (0.6 기준선, 가장 위 레이어)
+                    # k 라인 (0.6 기준선, 가장 위 레이어) - 검정색 실선
                     fig3.add_trace(go.Scatter(
                         x=df_krwusd_filtered['DATE'],
                         y=df_krwusd_filtered['k'],
                         mode='lines',
                         name='k',
-                        line=dict(color='rgba(0, 0, 0, 0.5)', width=1, dash='dash'),
+                        line=dict(color='rgb(0, 0, 0)', width=1),
                         showlegend=False,
                         yaxis='y'
                     ))
@@ -3914,7 +3910,7 @@ with tab3:
                         yaxis=dict(
                             title='Conviction',
                             side='left',
-                            range=[0, max(df_krwusd_filtered['Conviction'].max(), 0.6) * 1.1]
+                            range=[0, max(df_krwusd_filtered['Conviction'].max(), df_krwusd_filtered['Prob0'].max(), 0.6) * 1.1]
                         ),
                         yaxis2=dict(
                             title='USDKRW',
