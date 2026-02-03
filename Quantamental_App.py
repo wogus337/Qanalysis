@@ -3633,7 +3633,380 @@ with tab3:
                             st.empty()
 
     with subtab2:
-        st.subheader("Transformer FX Signal")
+        st.subheader("FX Signal by transformer")
+        
+        # 엑셀 파일 업로드
+        uploaded_file = st.file_uploader("엑셀 파일 업로드", type=['xlsx', 'xls'], key="fx_transformer_upload")
+        
+        if uploaded_file is not None:
+            try:
+                # USDKRW 시트 읽기
+                df_usdkrw = pd.read_excel(uploaded_file, sheet_name='USDKRW')
+                # KRWUSD 시트 읽기
+                df_krwusd = pd.read_excel(uploaded_file, sheet_name='KRWUSD')
+                
+                # DATE 컬럼을 datetime으로 변환
+                df_usdkrw['DATE'] = pd.to_datetime(df_usdkrw['DATE'])
+                df_krwusd['DATE'] = pd.to_datetime(df_krwusd['DATE'])
+                
+                # 최신 날짜 표시
+                max_date_usdkrw = df_usdkrw['DATE'].max()
+                max_date_krwusd = df_krwusd['DATE'].max()
+                latest_date = max(max_date_usdkrw, max_date_krwusd)
+                st.caption(f"📅 Last Update: {latest_date.strftime('%Y-%m-%d')}")
+                
+                # USDKRW 차트 섹션
+                st.markdown("### **USDKRW**")
+                
+                # 2013년 11월부터 필터링
+                df_usdkrw_filtered = df_usdkrw[df_usdkrw['DATE'] >= '2013-11-01'].copy()
+                
+                # d 칼럼 생성 (Conviction >= 0.6이면 0.6, 아니면 Conviction 값)
+                df_usdkrw_filtered['d'] = df_usdkrw_filtered['Conviction'].apply(lambda x: 0.6 if x >= 0.6 else x)
+                # k 칼럼 생성 (항상 0.6)
+                df_usdkrw_filtered['k'] = 0.6
+                
+                # 두 개의 차트를 한 행에 배치
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # 첫 번째 차트: Conviction과 USDKRW
+                    fig1 = go.Figure()
+                    
+                    # d 영역형 차트 (가장 아래 레이어) - 0.6 이상인 부분만 다른 색으로
+                    fig1.add_trace(go.Scatter(
+                        x=df_usdkrw_filtered['DATE'],
+                        y=df_usdkrw_filtered['d'],
+                        mode='lines',
+                        fill='tozeroy',
+                        name='d',
+                        line=dict(color='rgba(245, 130, 32, 0)', width=0),
+                        fillcolor='rgba(245, 130, 32, 0.5)',
+                        showlegend=False,
+                        yaxis='y'
+                    ))
+                    
+                    # Conviction 영역형 차트 (중간 레이어)
+                    fig1.add_trace(go.Scatter(
+                        x=df_usdkrw_filtered['DATE'],
+                        y=df_usdkrw_filtered['Conviction'],
+                        mode='lines',
+                        fill='tozeroy',
+                        name='Conviction',
+                        line=dict(color='rgba(245, 178, 107, 0)', width=0),
+                        fillcolor='rgba(245, 178, 107, 0.5)',
+                        showlegend=True,
+                        legendgroup='conviction',
+                        yaxis='y'
+                    ))
+                    
+                    # k 라인 (0.6 기준선, 가장 위 레이어)
+                    fig1.add_trace(go.Scatter(
+                        x=df_usdkrw_filtered['DATE'],
+                        y=df_usdkrw_filtered['k'],
+                        mode='lines',
+                        name='k',
+                        line=dict(color='rgba(0, 0, 0, 0.5)', width=1, dash='dash'),
+                        showlegend=False,
+                        yaxis='y'
+                    ))
+                    
+                    # USDKRW 라인 (우축)
+                    fig1.add_trace(go.Scatter(
+                        x=df_usdkrw_filtered['DATE'],
+                        y=df_usdkrw_filtered['USDKRW'],
+                        mode='lines',
+                        name='USDKRW',
+                        line=dict(color='rgb(4, 59, 114)', width=2),
+                        showlegend=True,
+                        legendgroup='usdkrw',
+                        yaxis='y2'
+                    ))
+                    
+                    # 레이아웃 설정
+                    # 날짜 범위에서 6개월 간격으로 tick 생성
+                    date_range = pd.date_range(
+                        start=df_usdkrw_filtered['DATE'].min(),
+                        end=df_usdkrw_filtered['DATE'].max(),
+                        freq='6MS'  # 6개월 간격
+                    )
+                    
+                    fig1.update_layout(
+                        xaxis=dict(
+                            title='Date',
+                            tickformat='%y.%m',
+                            tickmode='array',
+                            tickvals=date_range
+                        ),
+                        yaxis=dict(
+                            title='Conviction',
+                            side='left',
+                            range=[0, max(df_usdkrw_filtered['Conviction'].max(), 0.6) * 1.1]
+                        ),
+                        yaxis2=dict(
+                            title='USDKRW',
+                            side='right',
+                            overlaying='y'
+                        ),
+                        legend=dict(
+                            x=0.02,
+                            y=0.98,
+                            bgcolor='rgba(255, 255, 255, 0.8)',
+                            bordercolor='rgba(0, 0, 0, 0.2)',
+                            borderwidth=1
+                        ),
+                        hovermode='x unified',
+                        margin=dict(l=50, r=50, t=20, b=40)
+                    )
+                    
+                    # 범례 이름 변경
+                    fig1.update_traces(
+                        selector=dict(name='Conviction'),
+                        name='Conviction(L)'
+                    )
+                    fig1.update_traces(
+                        selector=dict(name='USDKRW'),
+                        name='USDKRW(R)'
+                    )
+                    
+                    st.plotly_chart(fig1, use_container_width=True)
+                
+                with col2:
+                    # 두 번째 차트: FX_Long과 Strategy
+                    fig2 = go.Figure()
+                    
+                    # FX_Long 라인
+                    fig2.add_trace(go.Scatter(
+                        x=df_usdkrw_filtered['DATE'],
+                        y=df_usdkrw_filtered['FX_Long'],
+                        mode='lines',
+                        name='USD Long',
+                        line=dict(color='rgb(245, 130, 32)', width=2),
+                        yaxis='y'
+                    ))
+                    
+                    # Strategy 라인
+                    fig2.add_trace(go.Scatter(
+                        x=df_usdkrw_filtered['DATE'],
+                        y=df_usdkrw_filtered['Strategy'],
+                        mode='lines',
+                        name='투자전략',
+                        line=dict(color='rgb(4, 59, 114)', width=2),
+                        yaxis='y'
+                    ))
+                    
+                    # 레이아웃 설정
+                    # 날짜 범위에서 6개월 간격으로 tick 생성
+                    date_range2 = pd.date_range(
+                        start=df_usdkrw_filtered['DATE'].min(),
+                        end=df_usdkrw_filtered['DATE'].max(),
+                        freq='6MS'  # 6개월 간격
+                    )
+                    
+                    fig2.update_layout(
+                        xaxis=dict(
+                            title='Date',
+                            tickformat='%y.%m',
+                            tickmode='array',
+                            tickvals=date_range2
+                        ),
+                        yaxis=dict(
+                            title='%',
+                            tickformat='.0%',
+                            side='left'
+                        ),
+                        legend=dict(
+                            x=0.02,
+                            y=0.98,
+                            bgcolor='rgba(255, 255, 255, 0.8)',
+                            bordercolor='rgba(0, 0, 0, 0.2)',
+                            borderwidth=1
+                        ),
+                        hovermode='x unified',
+                        margin=dict(l=50, r=50, t=20, b=40)
+                    )
+                    
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                # KRWUSD 차트 섹션
+                st.markdown("### **KRWUSD**")
+                
+                # 2013년 11월부터 필터링
+                df_krwusd_filtered = df_krwusd[df_krwusd['DATE'] >= '2013-11-01'].copy()
+                
+                # d 칼럼 생성 (Conviction >= 0.6이면 0.6, 아니면 Conviction 값)
+                df_krwusd_filtered['d'] = df_krwusd_filtered['Conviction'].apply(lambda x: 0.6 if x >= 0.6 else x)
+                # k 칼럼 생성 (항상 0.6)
+                df_krwusd_filtered['k'] = 0.6
+                
+                # 두 개의 차트를 한 행에 배치
+                col3, col4 = st.columns(2)
+                
+                with col3:
+                    # 첫 번째 차트: Conviction과 USDKRW
+                    fig3 = go.Figure()
+                    
+                    # d 영역형 차트 (가장 아래 레이어) - 0.6 이상인 부분만 다른 색으로
+                    fig3.add_trace(go.Scatter(
+                        x=df_krwusd_filtered['DATE'],
+                        y=df_krwusd_filtered['d'],
+                        mode='lines',
+                        fill='tozeroy',
+                        name='d',
+                        line=dict(color='rgba(245, 130, 32, 0)', width=0),
+                        fillcolor='rgba(245, 130, 32, 0.5)',
+                        showlegend=False,
+                        yaxis='y'
+                    ))
+                    
+                    # Conviction 영역형 차트 (중간 레이어)
+                    fig3.add_trace(go.Scatter(
+                        x=df_krwusd_filtered['DATE'],
+                        y=df_krwusd_filtered['Conviction'],
+                        mode='lines',
+                        fill='tozeroy',
+                        name='Conviction',
+                        line=dict(color='rgba(245, 178, 107, 0)', width=0),
+                        fillcolor='rgba(245, 178, 107, 0.5)',
+                        showlegend=True,
+                        legendgroup='conviction',
+                        yaxis='y'
+                    ))
+                    
+                    # k 라인 (0.6 기준선, 가장 위 레이어)
+                    fig3.add_trace(go.Scatter(
+                        x=df_krwusd_filtered['DATE'],
+                        y=df_krwusd_filtered['k'],
+                        mode='lines',
+                        name='k',
+                        line=dict(color='rgba(0, 0, 0, 0.5)', width=1, dash='dash'),
+                        showlegend=False,
+                        yaxis='y'
+                    ))
+                    
+                    # USDKRW 라인 (우축)
+                    fig3.add_trace(go.Scatter(
+                        x=df_krwusd_filtered['DATE'],
+                        y=df_krwusd_filtered['USDKRW'],
+                        mode='lines',
+                        name='USDKRW',
+                        line=dict(color='rgb(4, 59, 114)', width=2),
+                        showlegend=True,
+                        legendgroup='usdkrw',
+                        yaxis='y2'
+                    ))
+                    
+                    # 레이아웃 설정
+                    # 날짜 범위에서 6개월 간격으로 tick 생성
+                    date_range3 = pd.date_range(
+                        start=df_krwusd_filtered['DATE'].min(),
+                        end=df_krwusd_filtered['DATE'].max(),
+                        freq='6MS'  # 6개월 간격
+                    )
+                    
+                    fig3.update_layout(
+                        xaxis=dict(
+                            title='Date',
+                            tickformat='%y.%m',
+                            tickmode='array',
+                            tickvals=date_range3
+                        ),
+                        yaxis=dict(
+                            title='Conviction',
+                            side='left',
+                            range=[0, max(df_krwusd_filtered['Conviction'].max(), 0.6) * 1.1]
+                        ),
+                        yaxis2=dict(
+                            title='USDKRW',
+                            side='right',
+                            overlaying='y'
+                        ),
+                        legend=dict(
+                            x=0.02,
+                            y=0.98,
+                            bgcolor='rgba(255, 255, 255, 0.8)',
+                            bordercolor='rgba(0, 0, 0, 0.2)',
+                            borderwidth=1
+                        ),
+                        hovermode='x unified',
+                        margin=dict(l=50, r=50, t=20, b=40)
+                    )
+                    
+                    # 범례 이름 변경
+                    fig3.update_traces(
+                        selector=dict(name='Conviction'),
+                        name='Conviction(L)'
+                    )
+                    fig3.update_traces(
+                        selector=dict(name='USDKRW'),
+                        name='USDKRW(R)'
+                    )
+                    
+                    st.plotly_chart(fig3, use_container_width=True)
+                
+                with col4:
+                    # 두 번째 차트: FX_Long과 Strategy
+                    fig4 = go.Figure()
+                    
+                    # FX_Long 라인
+                    fig4.add_trace(go.Scatter(
+                        x=df_krwusd_filtered['DATE'],
+                        y=df_krwusd_filtered['FX_Long'],
+                        mode='lines',
+                        name='KRW Long',
+                        line=dict(color='rgb(245, 130, 32)', width=2),
+                        yaxis='y'
+                    ))
+                    
+                    # Strategy 라인
+                    fig4.add_trace(go.Scatter(
+                        x=df_krwusd_filtered['DATE'],
+                        y=df_krwusd_filtered['Strategy'],
+                        mode='lines',
+                        name='투자전략',
+                        line=dict(color='rgb(4, 59, 114)', width=2),
+                        yaxis='y'
+                    ))
+                    
+                    # 레이아웃 설정
+                    # 날짜 범위에서 6개월 간격으로 tick 생성
+                    date_range4 = pd.date_range(
+                        start=df_krwusd_filtered['DATE'].min(),
+                        end=df_krwusd_filtered['DATE'].max(),
+                        freq='6MS'  # 6개월 간격
+                    )
+                    
+                    fig4.update_layout(
+                        xaxis=dict(
+                            title='Date',
+                            tickformat='%y.%m',
+                            tickmode='array',
+                            tickvals=date_range4
+                        ),
+                        yaxis=dict(
+                            title='%',
+                            tickformat='.0%',
+                            side='left'
+                        ),
+                        legend=dict(
+                            x=0.02,
+                            y=0.98,
+                            bgcolor='rgba(255, 255, 255, 0.8)',
+                            bordercolor='rgba(0, 0, 0, 0.2)',
+                            borderwidth=1
+                        ),
+                        hovermode='x unified',
+                        margin=dict(l=50, r=50, t=20, b=40)
+                    )
+                    
+                    st.plotly_chart(fig4, use_container_width=True)
+                    
+            except Exception as e:
+                st.error(f"파일을 읽는 중 오류가 발생했습니다: {str(e)}")
+                st.info("파일 형식을 확인해주세요. USDKRW와 KRWUSD 시트가 필요합니다.")
+        else:
+            st.info("엑셀 파일을 업로드해주세요.")
+
 
 
 
