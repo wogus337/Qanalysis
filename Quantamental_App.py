@@ -3679,7 +3679,7 @@ with tab3:
                         fill='tozeroy',
                         name='Prob1',
                         line=dict(color='rgba(245, 130, 32, 0)', width=0),
-                        fillcolor='rgba(245, 130, 32, 0.5)',
+                        fillcolor='rgba(245, 130, 32, 1)',
                         showlegend=False,
                         yaxis='y'
                     ))
@@ -3692,7 +3692,7 @@ with tab3:
                         fill='tozeroy',
                         name='Conviction',
                         line=dict(color='rgba(245, 178, 107, 0)', width=0),
-                        fillcolor='rgba(245, 178, 107, 0.5)',
+                        fillcolor='rgba(245, 178, 107, 1)',
                         showlegend=True,
                         legendgroup='conviction',
                         yaxis='y'
@@ -3850,7 +3850,7 @@ with tab3:
                         fill='tozeroy',
                         name='Prob0',
                         line=dict(color='rgba(245, 130, 32, 0)', width=0),
-                        fillcolor='rgba(245, 130, 32, 0.5)',
+                        fillcolor='rgba(245, 130, 32, 1)',
                         showlegend=False,
                         yaxis='y'
                     ))
@@ -3863,7 +3863,7 @@ with tab3:
                         fill='tozeroy',
                         name='Conviction',
                         line=dict(color='rgba(245, 178, 107, 0)', width=0),
-                        fillcolor='rgba(245, 178, 107, 0.5)',
+                        fillcolor='rgba(245, 178, 107, 1)',
                         showlegend=True,
                         legendgroup='conviction',
                         yaxis='y'
@@ -4002,6 +4002,7 @@ with tab3:
                 st.info("파일 형식을 확인해주세요. USDKRW와 KRWUSD 시트가 필요합니다.")
         else:
             st.info("엑셀 파일을 업로드해주세요.")
+
 
 
 
