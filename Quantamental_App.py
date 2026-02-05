@@ -1047,13 +1047,12 @@ default_main_tab = query_params.get("tab", "US Macro")
 if default_main_tab not in main_tab_options:
     default_main_tab = "US Macro"
 
-# 메인 탭 선택 (horizontal radio button)
-selected_main_tab = st.radio(
+# 메인 탭 선택 (segmented control)
+selected_main_tab = st.segmented_control(
     "메인 메뉴",
     main_tab_options,
-    index=main_tab_options.index(default_main_tab),
-    horizontal=True,
-    key="main_tab_radio",
+    default=default_main_tab,
+    key="main_tab_segmented",
     label_visibility="collapsed"
 )
 
@@ -1070,12 +1069,11 @@ if selected_main_tab == "US Macro":
     if default_us_macro_subtab not in us_macro_subtab_options:
         default_us_macro_subtab = "US Man.PMI"
     
-    selected_us_macro_subtab = st.radio(
+    selected_us_macro_subtab = st.segmented_control(
         "US Macro 세부 메뉴",
         us_macro_subtab_options,
-        index=us_macro_subtab_options.index(default_us_macro_subtab),
-        horizontal=True,
-        key="us_macro_subtab_radio",
+        default=default_us_macro_subtab,
+        key="us_macro_subtab_segmented",
         label_visibility="collapsed"
     )
     st.query_params["subtab"] = selected_us_macro_subtab
@@ -3261,12 +3259,11 @@ elif selected_main_tab == "Signal Model":
     if default_signal_subtab not in signal_subtab_options:
         default_signal_subtab = "TransformerFX"
     
-    selected_signal_subtab = st.radio(
+    selected_signal_subtab = st.segmented_control(
         "Signal Model 세부 메뉴",
         signal_subtab_options,
-        index=signal_subtab_options.index(default_signal_subtab),
-        horizontal=True,
-        key="signal_model_subtab_radio",
+        default=default_signal_subtab,
+        key="signal_model_subtab_segmented",
         label_visibility="collapsed"
     )
     st.query_params["subtab"] = selected_signal_subtab
