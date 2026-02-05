@@ -1038,13 +1038,49 @@ def run_analysis(raw_df):
     return selected_summary_df_sorted, selected_timeseries_results, selected_detail_results
 
 
-# 탭 생성
-tab1, tab2, tab3 = st.tabs(["US Macro", "FedWatch", "Signal Model"])
+# ===== URL Query Parameter 기반 탭 라우팅 =====
+query_params = st.query_params
 
-with tab1:
-    subtab1, subtab2, subtab3, subtab4, subtab5 = st.tabs(["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI"])
+# 메인 탭 옵션
+main_tab_options = ["US Macro", "FedWatch", "Signal Model"]
+default_main_tab = query_params.get("tab", "US Macro")
+if default_main_tab not in main_tab_options:
+    default_main_tab = "US Macro"
 
-    with subtab1:
+# 메인 탭 선택 (horizontal radio button)
+selected_main_tab = st.radio(
+    "메인 메뉴",
+    main_tab_options,
+    index=main_tab_options.index(default_main_tab),
+    horizontal=True,
+    key="main_tab_radio",
+    label_visibility="collapsed"
+)
+
+# URL 파라미터 업데이트
+st.query_params["tab"] = selected_main_tab
+
+st.markdown("---")
+
+# ===== US Macro 탭 =====
+if selected_main_tab == "US Macro":
+    # 서브탭 옵션
+    us_macro_subtab_options = ["US Man.PMI", "US Srv.PMI", "US NFP", "US CPI", "US PPI"]
+    default_us_macro_subtab = query_params.get("subtab", "US Man.PMI")
+    if default_us_macro_subtab not in us_macro_subtab_options:
+        default_us_macro_subtab = "US Man.PMI"
+    
+    selected_us_macro_subtab = st.radio(
+        "US Macro 세부 메뉴",
+        us_macro_subtab_options,
+        index=us_macro_subtab_options.index(default_us_macro_subtab),
+        horizontal=True,
+        key="us_macro_subtab_radio",
+        label_visibility="collapsed"
+    )
+    st.query_params["subtab"] = selected_us_macro_subtab
+
+    if selected_us_macro_subtab == "US Man.PMI":
         st.subheader("US ISM Man. PMI")
 
         # 새로고침 버튼
@@ -1272,7 +1308,7 @@ with tab1:
 
                 st.plotly_chart(ism_fig, use_container_width=True)
 
-    with subtab2:
+    elif selected_us_macro_subtab == "US Srv.PMI":
 
         st.subheader("US ISM Srv. PMI")
 
@@ -1501,7 +1537,7 @@ with tab1:
 
                 st.plotly_chart(srv_fig, use_container_width=True)
 
-    with subtab3:
+    elif selected_us_macro_subtab == "US NFP":
 
         st.subheader("US Non Farm Payroll(sa)")
 
@@ -2641,7 +2677,7 @@ with tab1:
                 )
                 st.plotly_chart(fig_loc_share, use_container_width=True)
 
-    with subtab4:
+    elif selected_us_macro_subtab == "US CPI":
 
         st.subheader("US CPI")
 
@@ -2737,7 +2773,7 @@ with tab1:
         ##########################
         # PMI 보고 차트 코드 참고하기
 
-    with subtab5:
+    elif selected_us_macro_subtab == "US PPI":
 
         st.subheader("US PPI")
 
@@ -2834,7 +2870,12 @@ with tab1:
         ##########################
         # PMI 보고 차트 코드 참고하기
 
-with tab2:
+# ===== FedWatch 탭 =====
+elif selected_main_tab == "FedWatch":
+    # subtab 파라미터 제거 (FedWatch에는 서브탭 없음)
+    if "subtab" in st.query_params:
+        del st.query_params["subtab"]
+    
     st.subheader("FedWatch")
     
     # 1. CEIC 데이터 로딩 함수
@@ -3212,10 +3253,25 @@ with tab2:
     else:
         st.warning("CSV 파일을 불러올 수 없습니다.")
 
-with tab3:
-    subtab1, subtab2 = st.tabs(["TransformerFX", "FDS"])
+# ===== Signal Model 탭 =====
+elif selected_main_tab == "Signal Model":
+    # 서브탭 옵션
+    signal_subtab_options = ["TransformerFX", "FDS"]
+    default_signal_subtab = query_params.get("subtab", "TransformerFX")
+    if default_signal_subtab not in signal_subtab_options:
+        default_signal_subtab = "TransformerFX"
+    
+    selected_signal_subtab = st.radio(
+        "Signal Model 세부 메뉴",
+        signal_subtab_options,
+        index=signal_subtab_options.index(default_signal_subtab),
+        horizontal=True,
+        key="signal_model_subtab_radio",
+        label_visibility="collapsed"
+    )
+    st.query_params["subtab"] = selected_signal_subtab
 
-    with subtab1:
+    if selected_signal_subtab == "TransformerFX":
         st.subheader("FX Signal by transformer")
         
         # 기본 파일 경로
@@ -3605,7 +3661,7 @@ with tab3:
         elif file_to_use is None:
             st.info("기본 파일(streamlit_24_fx.xlsx)을 찾을 수 없습니다. 파일을 업로드해주세요.")
 
-    with subtab2:
+    elif selected_signal_subtab == "FDS":
 
         st.subheader("Fractal Dimension Trading Analysis")
 
@@ -4021,3 +4077,4 @@ with tab3:
                     for idx in range(len(cases), max_cols):
                         with cols[idx]:
                             st.empty()
+
