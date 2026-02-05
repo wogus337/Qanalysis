@@ -1,3 +1,9 @@
+import streamlit as st
+
+if st.query_params.get("ping") is not None:
+    st.write("pong")
+    st.stop()
+
 import os
 import sys
 
@@ -4074,4 +4080,5 @@ elif selected_main_tab == "Signal Model":
                     for idx in range(len(cases), max_cols):
                         with cols[idx]:
                             st.empty()
+
 
