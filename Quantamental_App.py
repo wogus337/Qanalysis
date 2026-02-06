@@ -3382,20 +3382,17 @@ elif selected_main_tab == "Signal Model":
                         yaxis='y2'
                     ))
                     
-                    # 레이아웃 설정
-                    # 날짜 범위에서 6개월 간격으로 tick 생성
-                    date_range = pd.date_range(
-                        start=df_usdkrw_filtered['DATE'].min(),
-                        end=df_usdkrw_filtered['DATE'].max(),
-                        freq='6MS'  # 6개월 간격
-                    )
-                    
+                    # 레이아웃 설정 - 동적 날짜 형식 (줌 레벨에 따라 자동 조정)
                     fig1.update_layout(
                         xaxis=dict(
                             title='Date',
-                            tickformat='%y.%m',
-                            tickmode='array',
-                            tickvals=date_range
+                            tickformatstops=[
+                                dict(dtickrange=[None, 86400000], value="%Y-%m-%d"),  # 1일 미만: 전체 날짜
+                                dict(dtickrange=[86400000, 604800000], value="%m-%d"),  # 1일~1주: 월-일
+                                dict(dtickrange=[604800000, "M1"], value="%m-%d"),  # 1주~1개월: 월-일
+                                dict(dtickrange=["M1", "M6"], value="%y.%m"),  # 1개월~6개월: YY.MM
+                                dict(dtickrange=["M6", None], value="%y.%m"),  # 6개월 이상: YY.MM
+                            ]
                         ),
                         yaxis=dict(
                             title='Conviction',
@@ -3454,20 +3451,17 @@ elif selected_main_tab == "Signal Model":
                         yaxis='y'
                     ))
                     
-                    # 레이아웃 설정
-                    # 날짜 범위에서 6개월 간격으로 tick 생성
-                    date_range2 = pd.date_range(
-                        start=df_usdkrw_filtered['DATE'].min(),
-                        end=df_usdkrw_filtered['DATE'].max(),
-                        freq='6MS'  # 6개월 간격
-                    )
-                    
+                    # 레이아웃 설정 - 동적 날짜 형식 (줌 레벨에 따라 자동 조정)
                     fig2.update_layout(
                         xaxis=dict(
                             title='Date',
-                            tickformat='%y.%m',
-                            tickmode='array',
-                            tickvals=date_range2
+                            tickformatstops=[
+                                dict(dtickrange=[None, 86400000], value="%Y-%m-%d"),  # 1일 미만: 전체 날짜
+                                dict(dtickrange=[86400000, 604800000], value="%m-%d"),  # 1일~1주: 월-일
+                                dict(dtickrange=[604800000, "M1"], value="%m-%d"),  # 1주~1개월: 월-일
+                                dict(dtickrange=["M1", "M6"], value="%y.%m"),  # 1개월~6개월: YY.MM
+                                dict(dtickrange=["M6", None], value="%y.%m"),  # 6개월 이상: YY.MM
+                            ]
                         ),
                         yaxis=dict(
                             title='%',
@@ -3553,20 +3547,17 @@ elif selected_main_tab == "Signal Model":
                         yaxis='y2'
                     ))
                     
-                    # 레이아웃 설정
-                    # 날짜 범위에서 6개월 간격으로 tick 생성
-                    date_range3 = pd.date_range(
-                        start=df_krwusd_filtered['DATE'].min(),
-                        end=df_krwusd_filtered['DATE'].max(),
-                        freq='6MS'  # 6개월 간격
-                    )
-                    
+                    # 레이아웃 설정 - 동적 날짜 형식 (줌 레벨에 따라 자동 조정)
                     fig3.update_layout(
                         xaxis=dict(
                             title='Date',
-                            tickformat='%y.%m',
-                            tickmode='array',
-                            tickvals=date_range3
+                            tickformatstops=[
+                                dict(dtickrange=[None, 86400000], value="%Y-%m-%d"),  # 1일 미만: 전체 날짜
+                                dict(dtickrange=[86400000, 604800000], value="%m-%d"),  # 1일~1주: 월-일
+                                dict(dtickrange=[604800000, "M1"], value="%m-%d"),  # 1주~1개월: 월-일
+                                dict(dtickrange=["M1", "M6"], value="%y.%m"),  # 1개월~6개월: YY.MM
+                                dict(dtickrange=["M6", None], value="%y.%m"),  # 6개월 이상: YY.MM
+                            ]
                         ),
                         yaxis=dict(
                             title='Conviction',
@@ -3625,20 +3616,17 @@ elif selected_main_tab == "Signal Model":
                         yaxis='y'
                     ))
                     
-                    # 레이아웃 설정
-                    # 날짜 범위에서 6개월 간격으로 tick 생성
-                    date_range4 = pd.date_range(
-                        start=df_krwusd_filtered['DATE'].min(),
-                        end=df_krwusd_filtered['DATE'].max(),
-                        freq='6MS'  # 6개월 간격
-                    )
-                    
+                    # 레이아웃 설정 - 동적 날짜 형식 (줌 레벨에 따라 자동 조정)
                     fig4.update_layout(
                         xaxis=dict(
                             title='Date',
-                            tickformat='%y.%m',
-                            tickmode='array',
-                            tickvals=date_range4
+                            tickformatstops=[
+                                dict(dtickrange=[None, 86400000], value="%Y-%m-%d"),  # 1일 미만: 전체 날짜
+                                dict(dtickrange=[86400000, 604800000], value="%m-%d"),  # 1일~1주: 월-일
+                                dict(dtickrange=[604800000, "M1"], value="%m-%d"),  # 1주~1개월: 월-일
+                                dict(dtickrange=["M1", "M6"], value="%y.%m"),  # 1개월~6개월: YY.MM
+                                dict(dtickrange=["M6", None], value="%y.%m"),  # 6개월 이상: YY.MM
+                            ]
                         ),
                         yaxis=dict(
                             title='%',
@@ -4080,6 +4068,7 @@ elif selected_main_tab == "Signal Model":
                     for idx in range(len(cases), max_cols):
                         with cols[idx]:
                             st.empty()
+
 
 
 
